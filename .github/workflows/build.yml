@@ -17,7 +17,7 @@ permissions:
   checks: write
 
 env:
-  DOTNET_VERSION: "8.0.x"
+  DOTNET_VERSION: "10.0.x"
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   SOLUTION_FILE: Pocs.Aspire.sln
@@ -43,9 +43,9 @@ jobs:
 
       - name: Test
         run: >
-          dotnet test ${{ env.SOLUTION_FILE }}
+          dotnet test --solution ${{ env.SOLUTION_FILE }}
           --configuration Release --no-build
-          --logger trx --results-directory TestResults
+          --results-directory TestResults --report-xunit-trx
 
       - name: Publish test results
         uses: dorny/test-reporter@v3

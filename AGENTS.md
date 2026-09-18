@@ -64,7 +64,7 @@ matching HTTP response — `ValidationError` via `ToValidationProblem`, every ot
 | Orchestration | .NET Aspire (`Aspire.Hosting.*`) |
 | HTTP API | ASP.NET Core Minimal APIs |
 | API versioning | `Asp.Versioning.Http`, URL-segment (`api/v{version}/...`) |
-| Persistence | EF Core 9 + Npgsql (Postgres), migrations applied at startup |
+| Persistence | EF Core 10 + Npgsql (Postgres), migrations applied at startup |
 | Caching | Redis via `Aspire.StackExchange.Redis.OutputCaching` |
 | Validation | FluentValidation |
 | Error handling | LanguageExt (`Either<Failure, T>`, `Option<T>`) — no exceptions for expected failures |

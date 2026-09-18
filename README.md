@@ -39,7 +39,7 @@ product.
 
 Prerequisites:
 
-- .NET 8 SDK
+- .NET 10 SDK
 - Docker or Podman
 
 ```shell
@@ -50,7 +50,7 @@ The Aspire dashboard URL (with its login token) is printed to the console; the
 API's Swagger UI is linked from the dashboard.
 
 ```shell
-dotnet test Pocs.Aspire.sln
+dotnet test --solution Pocs.Aspire.sln
 ```
 
 Integration and functional tests need Docker running — they start real
@@ -144,29 +144,29 @@ Humans decide, review, and merge.
 - Delete and List endpoints for users — only Create, Update, and GetById exist
   today (`src/Pocs.Aspire.ApiService/Endpoints/UsersEndpoints.cs`)
 - A second service with inter-service messaging, to explore that side of Aspire
-- Upgrade to .NET 10 and Aspire 13 — currently `net8.0` and Aspire 9.1.0
 - Architecture tests, to enforce the dependency direction in CI rather than by convention
 - Mutation testing, to check how much the current test suite actually catches
 
 ## Stack
 
-- .NET 8 (`net8.0`)
-- .NET Aspire 9.1.0 (`Aspire.Hosting.AppHost`, `Aspire.Hosting.PostgreSQL`,
+- .NET 10 (`net10.0`)
+- .NET Aspire 13.5.4 (`Aspire.AppHost.Sdk`, `Aspire.Hosting.PostgreSQL`,
   `Aspire.Hosting.Redis`, `Aspire.Npgsql.EntityFrameworkCore.PostgreSQL`,
   `Aspire.StackExchange.Redis.OutputCaching`)
-- EF Core 9.0.3 (`Microsoft.EntityFrameworkCore`, `.Relational`, `.Design`),
-  `Npgsql.EntityFrameworkCore.PostgreSQL` 9.0.4
+- EF Core 10.0.12 (`Microsoft.EntityFrameworkCore`, `.Relational`, `.Design`),
+  `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3
 - LanguageExt.Core 4.4.9
-- FluentValidation 11.11.0
-- Asp.Versioning.Http 8.1.0
-- Swashbuckle.AspNetCore 8.1.0
-- OpenTelemetry (core/exporter 1.15.3, ASP.NET Core / HTTP / runtime
-  instrumentation 1.11.1)
-- xunit.v3 2.0.0
+- FluentValidation 12.1.1
+- Asp.Versioning.Http 10.2.3
+- Swashbuckle.AspNetCore 10.2.3
+- OpenTelemetry (core/exporter 1.19.0, ASP.NET Core / HTTP / runtime
+  instrumentation 1.18.0)
+- xunit.v3 4.0.1, on Microsoft Testing Platform (`dotnet test` opts in via
+  `global.json`)
 - Shouldly 4.3.0
-- NSubstitute 5.3.0
-- Testcontainers / Testcontainers.PostgreSql 4.3.0
-- SonarAnalyzer.CSharp 10.8.0.113526
+- NSubstitute 6.2.0
+- Testcontainers / Testcontainers.PostgreSql 4.15.0
+- SonarAnalyzer.CSharp 10.34.0.3385
 
 ## License
 

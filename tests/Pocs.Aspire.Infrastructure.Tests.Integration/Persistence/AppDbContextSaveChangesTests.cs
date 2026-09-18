@@ -24,9 +24,8 @@ public class AppDbContextSaveChangesTests : IAsyncLifetime
 
     public AppDbContextSaveChangesTests()
     {
-        var postgreSqlBuilder = new PostgreSqlBuilder();
+        var postgreSqlBuilder = new PostgreSqlBuilder("postgres:15");
         _container = postgreSqlBuilder
-            .WithImage("postgres:15")
             .WithCleanUp(true)
             .Build();
     }
