@@ -89,7 +89,8 @@ matching HTTP response — `ValidationError` via `ToValidationProblem`, every ot
 - `src/Pocs.Aspire.ServiceDefaults/` — shared telemetry, health, resilience wiring.
 - `tests/` — `*.Tests.Functional` (real Aspire app via `AspireHostFixture`),
   `*.Tests.Integration` (real Postgres via Testcontainers), `*.Tests.Unit`
-  (NSubstitute mocks, guard clauses only).
+  (NSubstitute mocks, guard clauses only), `*.Tests.Architecture` (ArchUnitNET rules
+  over the layer dependencies).
 
 Detailed coding and testing conventions load on demand from `.claude/rules/`.
 Code is the source of truth — read it rather than duplicating it here.

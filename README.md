@@ -29,6 +29,9 @@ product.
   (`src/Pocs.Aspire.ApiService/Endpoints/UsersEndpoints.cs`).
 - **Redis output caching on a read route**, keyed with `SetVaryByRouteValue("id")`
   on the single-user GET (`src/Pocs.Aspire.ApiService/Endpoints/UsersEndpoints.cs`).
+- **Architecture tests enforce the dependency direction.** ArchUnitNET rules
+  fail the build if Domain or Business gain a dependency they must not have
+  (`tests/Pocs.Aspire.Tests.Architecture`).
 - **Three test layers, weighted toward the real thing.** Functional tests run
   the actual Aspire app via `Aspire.Hosting.Testing`; integration tests hit a
   real Postgres via Testcontainers; unit tests (NSubstitute) are reserved for
@@ -80,6 +83,9 @@ session hook for Claude Code cloud sessions.
 - `tests/Pocs.Aspire.Infrastructure.Tests.Integration` — real Postgres via
   Testcontainers. [README](tests/Pocs.Aspire.Infrastructure.Tests.Integration/README.md)
 - `tests/Pocs.Aspire.Business.Tests.Unit` — NSubstitute mocks, guard clauses only.
+- `tests/Pocs.Aspire.Tests.Architecture` — ArchUnitNET rules over the compiled
+  assemblies: dependencies point inward, Domain and Business stay free of EF
+  Core and ASP.NET Core.
 
 ## Request flow
 
@@ -144,7 +150,6 @@ Humans decide, review, and merge.
 - Delete and List endpoints for users — only Create, Update, and GetById exist
   today (`src/Pocs.Aspire.ApiService/Endpoints/UsersEndpoints.cs`)
 - A second service with inter-service messaging, to explore that side of Aspire
-- Architecture tests, to enforce the dependency direction in CI rather than by convention
 - Mutation testing, to check how much the current test suite actually catches
 
 ## Stack
