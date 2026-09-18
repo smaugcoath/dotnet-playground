@@ -8,9 +8,6 @@ on:
       - feature/*
       - fix/*
   pull_request:
-    branches:
-      - master
-      - feature/*
 
 permissions:
   contents: read
