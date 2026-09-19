@@ -181,6 +181,8 @@ Humans decide, review, and merge.
   instrumentation 1.18.0)
 - xunit.v3 4.0.1, on Microsoft Testing Platform (`dotnet test` opts in via
   `global.json`)
+- Microsoft.Testing.Extensions.CodeCoverage 18.11.2, ReportGenerator 5.5.11 (coverage
+  summary on every CI run)
 - Shouldly 4.3.0
 - NSubstitute 6.2.0
 - Testcontainers / Testcontainers.PostgreSql 4.15.0
