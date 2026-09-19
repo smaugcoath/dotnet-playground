@@ -80,7 +80,8 @@ matching HTTP response — `ValidationError` via `ToValidationProblem`, every ot
 - `src/Pocs.Aspire.Domain/` — entities, value objects, `Failure` types, repository
   and unit-of-work abstractions. Feature folders under `Users/`.
 - `src/Pocs.Aspire.Business/` — one folder per use case (`Users/Create`,
-  `Users/GetById`, `Users/Update`), each with its service, validator, and mapper.
+  `Users/GetById`, `Users/Update`, `Users/Delete`, `Users/List`), each with its
+  service, validator, and mapper.
 - `src/Pocs.Aspire.Infrastructure/` — EF Core `AppDbContext`, configurations,
   migrations, repository implementations.
 - `src/Pocs.Aspire.ApiService/` — Minimal API endpoints in `Endpoints/`; all

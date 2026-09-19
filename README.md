@@ -70,7 +70,8 @@ session hook for Claude Code cloud sessions.
 - `src/Pocs.Aspire.ApiService` — Minimal API endpoints, versioning, Swagger,
   output caching. [README](src/Pocs.Aspire.ApiService/README.md)
 - `src/Pocs.Aspire.Business` — one folder per use case (`Users/Create`,
-  `Users/GetById`, `Users/Update`), each with its service, validator, and mapper.
+  `Users/GetById`, `Users/Update`, `Users/Delete`, `Users/List`), each with its
+  service, validator, and mapper.
 - `src/Pocs.Aspire.Domain` — entities, value objects, `Failure` types,
   repository and unit-of-work abstractions.
 - `src/Pocs.Aspire.Infrastructure` — EF Core `AppDbContext`, migrations,
@@ -99,6 +100,14 @@ persists it through `IUserRepository` and `IUnitOfWork.SaveChangesAsync`
 pattern-matches that `Either<Failure, CreateResponse>` into `201 Created`
 (with a `Location` pointing at `GetById`), `400 ValidationProblem`, or
 `409 Conflict`.
+
+`DELETE /api/v1/users/{id}` and `GET /api/v1/users?page=&pageSize=` follow the
+same shape: `UsersEndpoints.Delete` calls `IDeleteService.DeleteAsync`, which
+validates the id, loads the user, removes it, and returns `204 NoContent`,
+`400 ValidationProblem`, or `404 Not Found`.
+`UsersEndpoints.List` calls `IListService.ListAsync`, which validates `page`
+(1-based) and `pageSize` (1-100, default 20), then returns a `ListResponse`
+of users ordered by email, or `400 ValidationProblem`.
 
 ## Decisions
 
@@ -147,8 +156,6 @@ Humans decide, review, and merge.
 
 - Authentication and authorization — no identity provider or auth middleware
   is wired in yet
-- Delete and List endpoints for users — only Create, Update, and GetById exist
-  today (`src/Pocs.Aspire.ApiService/Endpoints/UsersEndpoints.cs`)
 - A second service with inter-service messaging, to explore that side of Aspire
 - Mutation testing, to check how much the current test suite actually catches
 

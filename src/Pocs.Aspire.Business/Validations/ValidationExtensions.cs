@@ -30,4 +30,16 @@ public static class ValidationExtensions
             .Must(Email.IsValid).WithMessage("A valid email is required.")
             .MaximumLength(100).WithMessage("Emails cannot exceed 100 characters.");
     }
+
+    public static IRuleBuilderOptions<T, int> ValidPage<T>(this IRuleBuilder<T, int> ruleBuilder)
+    {
+        return ruleBuilder
+            .GreaterThanOrEqualTo(1).WithMessage("Page must be 1 or greater.");
+    }
+
+    public static IRuleBuilderOptions<T, int> ValidPageSize<T>(this IRuleBuilder<T, int> ruleBuilder)
+    {
+        return ruleBuilder
+            .InclusiveBetween(1, 100).WithMessage("PageSize must be between 1 and 100.");
+    }
 }

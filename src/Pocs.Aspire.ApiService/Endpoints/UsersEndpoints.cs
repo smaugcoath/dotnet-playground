@@ -9,7 +9,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Pocs.Aspire.ApiService.Extensions;
 using Pocs.Aspire.Business.Users.Create;
+using Pocs.Aspire.Business.Users.Delete;
 using Pocs.Aspire.Business.Users.GetById;
+using Pocs.Aspire.Business.Users.List;
 using Pocs.Aspire.Business.Users.Update;
 using Pocs.Aspire.Domain.Errors;
 using System;
@@ -39,6 +41,9 @@ internal static class UsersEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName(nameof(GetById))
             .CacheOutput(policy => policy.Expire(TimeSpan.FromSeconds(5)).SetVaryByRouteValue("id"));
+        group.MapDelete("{id:guid}", Delete)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+        group.MapGet("", List);
 
         return builder;
     }
@@ -93,6 +98,49 @@ internal static class UsersEndpoints
         var result = await getByIdService.GetByIdAsync(request, cancellationToken);
 
         return result.Match<Results<Ok<GetByIdResponse>, ValidationProblem, ProblemHttpResult>>(
+            Right: response => TypedResults.Ok(response),
+            Left: failure => failure switch
+            {
+                ValidationError error => error.ToValidationProblem(httpContext),
+                _ => failure.ToProblem()
+            });
+    }
+
+    /// <summary>
+    /// Deletes a user by ID.
+    /// </summary>
+    public static async Task<Results<NoContent, ValidationProblem, ProblemHttpResult>> Delete(
+        [FromRoute] Guid id,
+        IDeleteService deleteService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        DeleteRequest request = new(id);
+        var result = await deleteService.DeleteAsync(request, cancellationToken);
+
+        return result.Match<Results<NoContent, ValidationProblem, ProblemHttpResult>>(
+            Right: _ => TypedResults.NoContent(),
+            Left: failure => failure switch
+            {
+                ValidationError error => error.ToValidationProblem(httpContext),
+                _ => failure.ToProblem()
+            });
+    }
+
+    /// <summary>
+    /// Lists users, paged.
+    /// </summary>
+    public static async Task<Results<Ok<ListResponse>, ValidationProblem, ProblemHttpResult>> List(
+        IListService listService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken,
+        int page = 1,
+        int pageSize = 20)
+    {
+        ListRequest request = new(page, pageSize);
+        var result = await listService.ListAsync(request, cancellationToken);
+
+        return result.Match<Results<Ok<ListResponse>, ValidationProblem, ProblemHttpResult>>(
             Right: response => TypedResults.Ok(response),
             Left: failure => failure switch
             {

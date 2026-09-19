@@ -11,7 +11,9 @@ delegates all business logic to `Pocs.Aspire.Business`.
 
 This project is responsible for:
 
-- Exposing REST endpoints for client applications (`Endpoints/UsersEndpoints.cs`)
+- Exposing REST endpoints for client applications (`Endpoints/UsersEndpoints.cs`):
+  `POST /api/v1/users`, `GET /api/v1/users/{id}`, `PUT /api/v1/users/{id}`,
+  `DELETE /api/v1/users/{id}`, `GET /api/v1/users?page=&pageSize=`
 - Pattern-matching each use case's `Either<Failure, TResponse>` result into the
   matching HTTP response
 - Declaring API versioning
