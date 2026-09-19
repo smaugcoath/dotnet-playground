@@ -1,6 +1,6 @@
-# pocs-aspire
+# dotnet-playground
 
-[![Build](https://github.com/smaugcoath/pocs-aspire/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/smaugcoath/pocs-aspire/actions/workflows/build.yml)
+[![Build](https://github.com/smaugcoath/dotnet-playground/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/smaugcoath/dotnet-playground/actions/workflows/build.yml)
 
 A proof-of-concept exploring .NET Aspire orchestration around a Clean
 Architecture minimal API, used as a sandbox for design decisions rather than a

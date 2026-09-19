@@ -1,5 +1,5 @@
 {
-  "name": "pocs-aspire",
+  "name": "dotnet-playground",
   "image": "mcr.microsoft.com/devcontainers/dotnet:8.0",
   "features": {
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
