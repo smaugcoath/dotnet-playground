@@ -2,7 +2,7 @@
   "name": "dotnet-playground",
   "image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
   "features": {
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
   },
   "postCreateCommand": "dotnet tool restore && dotnet restore Pocs.Aspire.sln",
   "customizations": {
