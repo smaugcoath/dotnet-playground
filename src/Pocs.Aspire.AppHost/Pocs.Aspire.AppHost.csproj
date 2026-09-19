@@ -1,9 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-	<Sdk Name="Aspire.AppHost.Sdk" Version="9.1.0" />
+﻿<Project Sdk="Aspire.AppHost.Sdk/13.5.4">
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<IsAspireHost>true</IsAspireHost>
+		<!-- No Aspire CLI here or in CI: the dashboard and DCP come from packages, and ASPIRE010 only reports that choice. -->
+		<AspireUseCliBundle>false</AspireUseCliBundle>
+		<NoWarn>$(NoWarn);ASPIRE010</NoWarn>
 		<UserSecretsId>4aa91e48-23c8-4be8-b5bc-8bd05670cfa6</UserSecretsId>
 	</PropertyGroup>
 
@@ -12,7 +14,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Aspire.Hosting.AppHost" />
 		<PackageReference Include="Aspire.Hosting.PostgreSQL" />
 		<PackageReference Include="Aspire.Hosting.Redis" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" />

@@ -23,9 +23,8 @@ public class UserRepositoryTests : IAsyncLifetime
 
     public UserRepositoryTests()
     {
-        var postgreSqlBuilder = new PostgreSqlBuilder();
+        var postgreSqlBuilder = new PostgreSqlBuilder("postgres:15");
         _container = postgreSqlBuilder
-            .WithImage("postgres:15")
             .WithCleanUp(true)
             .Build();
     }
@@ -265,5 +264,111 @@ public class UserRepositoryTests : IAsyncLifetime
 
         // Assert
         result.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ListAsync_ReturnsUsersOrderedByEmail_WithSkipAndTake()
+    {
+        // Arrange
+        var userA = User.From(
+            UserId.New(),
+            FirstName.From("Marissa"),
+            LastName.From("Mayer"),
+            Email.From("a.marissa.mayer.listordered@example.com"));
+        var userB = User.From(
+            UserId.New(),
+            FirstName.From("Sheryl"),
+            LastName.From("Sandberg"),
+            Email.From("b.sheryl.sandberg.listordered@example.com"));
+        var userC = User.From(
+            UserId.New(),
+            FirstName.From("Susan"),
+            LastName.From("Wojcicki"),
+            Email.From("c.susan.wojcicki.listordered@example.com"));
+        var expected = userB;
+
+        await using (var seedContext = new AppDbContext(DbContextOptions))
+        {
+            seedContext.AddRange(userA, userB, userC);
+            await seedContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        await using var context = new AppDbContext(DbContextOptions);
+        var repository = new UserRepository(context);
+
+        // Act
+        var result = await repository.ListAsync(1, 1, TestContext.Current.CancellationToken);
+
+        // Assert
+        result.Count.ShouldBe(1);
+        result[0].ShouldBeEquivalentTo(expected);
+    }
+
+    [Fact]
+    public async Task CountAsync_ReturnsNumberOfUsers()
+    {
+        // Arrange
+        var userA = User.From(
+            UserId.New(),
+            FirstName.From("Radia"),
+            LastName.From("Perlman"),
+            Email.From("radia.perlman.count@example.com"));
+        var userB = User.From(
+            UserId.New(),
+            FirstName.From("Frances"),
+            LastName.From("Allen"),
+            Email.From("frances.allen.count@example.com"));
+
+        await using (var seedContext = new AppDbContext(DbContextOptions))
+        {
+            seedContext.AddRange(userA, userB);
+            await seedContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        await using var context = new AppDbContext(DbContextOptions);
+        var repository = new UserRepository(context);
+
+        // Act
+        var result = await repository.CountAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        result.ShouldBeGreaterThanOrEqualTo(2);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_RemovesUser()
+    {
+        // Arrange
+        var seeded = User.From(
+            UserId.New(),
+            FirstName.From("Lynn"),
+            LastName.From("Conway"),
+            Email.From("lynn.conway.delete@example.com"));
+        var expected = Option<User>.None;
+
+        await using (var seedContext = new AppDbContext(DbContextOptions))
+        {
+            seedContext.Add(seeded);
+            await seedContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        await using (var deleteContext = new AppDbContext(DbContextOptions))
+        {
+            var repository = new UserRepository(deleteContext);
+            var loaded = (await repository.GetByIdAsync(seeded.Id, TestContext.Current.CancellationToken)).Match(
+                Some: user => user,
+                None: () => throw new InvalidOperationException("Expected the seeded user to be found, but the repository returned None."));
+
+            await repository.DeleteAsync(loaded, TestContext.Current.CancellationToken);
+            await deleteContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        // Act
+        await using var readContext = new AppDbContext(DbContextOptions);
+        var readRepository = new UserRepository(readContext);
+        var result = await readRepository.GetByIdAsync(seeded.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        result.ShouldBeEquivalentTo(expected);
     }
 }

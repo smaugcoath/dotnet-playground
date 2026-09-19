@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Pocs.Aspire.Tests.Architecture</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,20 +9,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="System.Net" />
-    <Using Include="Microsoft.Extensions.DependencyInjection" />
-    <Using Include="Aspire.Hosting.ApplicationModel" />
-    <Using Include="Aspire.Hosting.Testing" />
+    <None Include="..\..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.Testing" />
     <PackageReference Include="Shouldly" />
+    <PackageReference Include="TngTech.ArchUnitNET" />
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Referencing both AppHost and Infrastructure pulls conflicting EF Core Relational
+         versions transitively; pin them directly, same as ApiService.Tests.Functional does. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
@@ -31,6 +32,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Pocs.Aspire.ApiService\Pocs.Aspire.ApiService.csproj" />
     <ProjectReference Include="..\..\src\Pocs.Aspire.AppHost\Pocs.Aspire.AppHost.csproj" />
+    <ProjectReference Include="..\..\src\Pocs.Aspire.Business\Pocs.Aspire.Business.csproj" />
+    <ProjectReference Include="..\..\src\Pocs.Aspire.Domain\Pocs.Aspire.Domain.csproj" />
     <ProjectReference Include="..\..\src\Pocs.Aspire.Infrastructure\Pocs.Aspire.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Pocs.Aspire.ServiceDefaults\Pocs.Aspire.ServiceDefaults.csproj" />
   </ItemGroup>
 </Project>
