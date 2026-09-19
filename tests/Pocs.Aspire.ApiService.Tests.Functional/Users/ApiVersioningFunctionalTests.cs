@@ -12,7 +12,8 @@ namespace Pocs.Aspire.ApiService.Tests.Functional.Users;
 /// Proves the users endpoints are wired to URL-segment API versioning
 /// (api/v{version}/users), not just configured with no endpoint applying it.
 /// </summary>
-public class ApiVersioningFunctionalTests : IClassFixture<AspireHostFixture>
+[Collection(SharedAspireHost.Name)]
+public class ApiVersioningFunctionalTests
 {
     private readonly AspireHostFixture _fixture;
 

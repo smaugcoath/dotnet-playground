@@ -26,21 +26,18 @@ internal class UserRepository : IUserRepository
         return result;
     }
 
-    public async Task<Unit> CreateAsync(User user, CancellationToken cancellationToken = default)
+    public Task<Unit> CreateAsync(User user, CancellationToken cancellationToken = default)
     {
-        await _context.Users.AddAsync(user, cancellationToken);
+        _context.Users.Add(user);
 
-
-        return Unit.Default;
+        return Task.FromResult(Unit.Default);
     }
 
-    public async Task<Unit> UpdateAsync(User user, CancellationToken cancellationToken = default)
+    public Task<Unit> UpdateAsync(User user, CancellationToken cancellationToken = default)
     {
-        _context.Users.UpdateRange(user);
+        _context.Users.Update(user);
 
-        await Task.CompletedTask;
-
-        return Unit.Default;
+        return Task.FromResult(Unit.Default);
     }
 
     public async Task<bool> EmailExistsExceptForUser(Email email, UserId? userId = null, CancellationToken cancellationToken = default)

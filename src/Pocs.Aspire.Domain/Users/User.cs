@@ -3,13 +3,18 @@
 namespace Pocs.Aspire.Domain.Users;
 
 /// <summary>
-/// Represents an user.
+/// Represents a user.
 /// </summary>
 /// <remarks>
 /// This aggregate root includes identity and personal information for a user.
 /// </remarks>
 public class User
 {
+    /// <summary>
+    /// The database name of the unique index enforcing email uniqueness.
+    /// </summary>
+    public const string EmailUniqueIndexName = "IX_User_Email";
+
     /// <summary>
     /// Gets the unique identifier for the user.
     /// </summary>

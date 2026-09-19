@@ -16,11 +16,11 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Pocs.Aspire.ApiService.Users;
+namespace Pocs.Aspire.ApiService.Endpoints;
 
-public static class UsersEndpoints
+internal static class UsersEndpoints
 {
-    public static IEndpointRouteBuilder MapUserEndpoints(this IEndpointRouteBuilder builder)
+    public static IEndpointRouteBuilder MapUsersEndpoints(this IEndpointRouteBuilder builder)
     {
         var apiVersionSet = builder.NewApiVersionSet()
             .HasApiVersion(new ApiVersion(1, 0))
@@ -33,6 +33,7 @@ public static class UsersEndpoints
         group.MapPost("", Create)
             .ProducesProblem(StatusCodes.Status409Conflict);
         group.MapPut("{id:guid}", Update)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
         group.MapGet("{id:guid}", GetById)
             .ProducesProblem(StatusCodes.Status404NotFound)
@@ -40,8 +41,8 @@ public static class UsersEndpoints
             .CacheOutput(policy => policy.Expire(TimeSpan.FromSeconds(5)).SetVaryByRouteValue("id"));
 
         return builder;
-
     }
+
     public static async Task<Results<CreatedAtRoute<CreateResponse>, ValidationProblem, ProblemHttpResult>> Create(
         CreateRequest request,
         ICreateService createService,
@@ -50,14 +51,13 @@ public static class UsersEndpoints
     {
         var result = await createService.CreateAsync(request, cancellationToken);
 
-        return result.Case switch
-        {
-            CreateResponse response => TypedResults.CreatedAtRoute(response, nameof(GetById), new { id = response.Id, version = "1" }),
-            ValidationError error => error.ToValidationProblem(httpContext),
-            EmailAlreadyExistsError error => TypedResults.Problem(title: error.Message, detail: error.Code, statusCode: StatusCodes.Status409Conflict),
-            _ => throw new NotImplementedException()
-        };
-
+        return result.Match<Results<CreatedAtRoute<CreateResponse>, ValidationProblem, ProblemHttpResult>>(
+            Right: response => TypedResults.CreatedAtRoute(response, nameof(GetById), new { id = response.Id, version = "1" }),
+            Left: failure => failure switch
+            {
+                ValidationError error => error.ToValidationProblem(httpContext),
+                _ => failure.ToProblem()
+            });
     }
 
     public static async Task<Results<Ok<UpdateResponse>, ValidationProblem, ProblemHttpResult>> Update(
@@ -71,32 +71,33 @@ public static class UsersEndpoints
 
         var result = await updateService.UpdateAsync(request, cancellationToken);
 
-        return result.Case switch
-        {
-            UpdateResponse response => TypedResults.Ok(response),
-            ValidationError error => error.ToValidationProblem(httpContext),
-            EmailAlreadyExistsError error => TypedResults.Problem(title: error.Message, detail: error.Code, statusCode: StatusCodes.Status409Conflict),
-            _ => throw new NotImplementedException()
-        };
+        return result.Match<Results<Ok<UpdateResponse>, ValidationProblem, ProblemHttpResult>>(
+            Right: response => TypedResults.Ok(response),
+            Left: failure => failure switch
+            {
+                ValidationError error => error.ToValidationProblem(httpContext),
+                _ => failure.ToProblem()
+            });
     }
 
     /// <summary>
     /// Retrieves a user by ID.
     /// </summary>
-    public static async Task<Results<Ok<GetByIdResponse>, ProblemHttpResult>> GetById(
+    public static async Task<Results<Ok<GetByIdResponse>, ValidationProblem, ProblemHttpResult>> GetById(
         [FromRoute] Guid id,
         IGetByIdService getByIdService,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
         GetByIdRequest request = new(id);
         var result = await getByIdService.GetByIdAsync(request, cancellationToken);
 
-        return result.Case switch
-        {
-            GetByIdResponse response => TypedResults.Ok(response),
-            NotFoundError error => TypedResults.Problem(title: error.Message, detail: error.Code, statusCode: StatusCodes.Status404NotFound),
-            _ => throw new NotImplementedException()
-        };
+        return result.Match<Results<Ok<GetByIdResponse>, ValidationProblem, ProblemHttpResult>>(
+            Right: response => TypedResults.Ok(response),
+            Left: failure => failure switch
+            {
+                ValidationError error => error.ToValidationProblem(httpContext),
+                _ => failure.ToProblem()
+            });
     }
-
 }

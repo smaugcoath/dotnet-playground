@@ -18,8 +18,17 @@ paths:
 
 **Functional error handling.** Business services return
 `LanguageExt.Either<Failure, TResponse>` (and `Option<T>` for absence) — never
-throw for expected failure paths. Endpoints pattern-match `result.Case` into the
-matching HTTP response.
+throw for expected failure paths. Endpoints `Match` the `Either` into the
+matching HTTP response: `ValidationError` via `ToValidationProblem`, every other
+`Failure` via `ToProblem`.
+
+Value-object factories (`Email.From`, `FirstName.From`, `UserId.From`, ...) still
+throw `ArgumentException`: they guard invariants that validation has already
+enforced at the boundary, so a throw there is a programmer error, not an expected
+failure. A unique-index violation (SqlState 23505) surfaces as `Either` instead,
+via `IUnitOfWork.SaveChangesAsync` returning `Task<Either<Failure, Unit>>` mapped
+to `UniqueConstraintViolationError`. Other `DbUpdateException`s are still unmapped
+and reach the exception handler as a 500.
 
 **Versioned routing convention.** All user-facing routes live under
 `api/v{version:apiVersion}/...`, wired via `NewApiVersionSet()` /

@@ -5,30 +5,30 @@ on:
   push:
     branches:
       - master
-      - feature/*
-      - fix/*
   pull_request:
     branches:
-      - feature/*
+      - master
 
 permissions:
   contents: read
+  checks: write
 
 env:
-  DOTNET_VERSION: "8.x"
-  SOLUTION_FILE: "Pocs.Aspire.sln"
+  DOTNET_VERSION: "8.0.x"
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  SOLUTION_FILE: Pocs.Aspire.sln
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-           token: ${{ github.token }}
+      - name: Checkout
+        uses: actions/checkout@v7
 
-      - name: Setup
-        uses: actions/setup-dotnet@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -39,7 +39,15 @@ jobs:
         run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test ${{ env.SOLUTION_FILE }} --configuration Release --no-restore --no-build
+        run: >
+          dotnet test ${{ env.SOLUTION_FILE }}
+          --configuration Release --no-build
+          --logger trx --results-directory TestResults
 
-      - name : Publish
-        run: dotnet publish ${{ env.SOLUTION_FILE }}  --configuration Release --no-restore --no-build
+      - name: Publish test results
+        uses: dorny/test-reporter@v3
+        if: ${{ !cancelled() }}
+        with:
+          name: Test results
+          path: TestResults/*.trx
+          reporter: dotnet-trx

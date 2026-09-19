@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using LanguageExt;
+using Pocs.Aspire.Business.Users;
 using Pocs.Aspire.Business.Validations;
 using Pocs.Aspire.Domain;
 using Pocs.Aspire.Domain.Errors;
@@ -52,9 +53,13 @@ internal class UpdateService : IUpdateService
                 {
                     (user.FirstName, user.LastName, user.Email) = (updatedUser.FirstName, updatedUser.LastName, updatedUser.Email);
                     await _userRepository.UpdateAsync(user, cancellationToken);
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    var saveResult = await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                    return user.ToResponse();
+                    Either<Failure, UpdateResponse> mapped = saveResult.Match<Either<Failure, UpdateResponse>>(
+                        Right: _ => user.ToResponse(),
+                        Left: failure => failure.ToEmailFailure(email));
+
+                    return mapped.ToAsync();
                 }
             ).ToEither();
     }

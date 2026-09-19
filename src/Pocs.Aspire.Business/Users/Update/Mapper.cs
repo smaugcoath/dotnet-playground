@@ -1,7 +1,7 @@
-﻿namespace Pocs.Aspire.Business.Users.Update;
-
-using Pocs.Aspire.Domain.Users;
+﻿using Pocs.Aspire.Domain.Users;
 using Pocs.Aspire.Domain.Users.ValueObjects;
+
+namespace Pocs.Aspire.Business.Users.Update;
 
 /// <summary>
 /// Provides extension methods for mapping between User domain entities and request/response DTOs.

@@ -19,7 +19,7 @@ public static class HostApplicationBuilderCollectionExtensions
         return builder;
     }
 
-    public static void EnsureDatabaseCreation(this IApplicationBuilder applicationBuilder)
+    public static void ApplyMigrations(this IApplicationBuilder applicationBuilder)
     {
         using var scope = applicationBuilder.ApplicationServices.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();

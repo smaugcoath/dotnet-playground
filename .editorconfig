@@ -199,3 +199,7 @@ dotnet_diagnostic.IDE0290.severity = none
 dotnet_diagnostic.IDE0290.severity = none
 dotnet_diagnostic.S4487.severity = none
 dotnet_diagnostic.CA1707.severity = none
+
+# xUnit test classes and fixtures are public by convention; CA1515 only applies to application code.
+[tests/**.cs]
+dotnet_diagnostic.CA1515.severity = none

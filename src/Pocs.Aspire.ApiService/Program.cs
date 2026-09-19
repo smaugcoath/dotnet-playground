@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Pocs.Aspire.ApiService.Users;
+using Pocs.Aspire.ApiService.Endpoints;
 using Pocs.Aspire.Business;
 using Pocs.Aspire.Infrastructure;
 using System.Collections.Generic;
@@ -51,7 +51,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.MapDefaultEndpoints();
-app.MapUserEndpoints();
-app.EnsureDatabaseCreation();
+app.MapUsersEndpoints();
+app.ApplyMigrations();
 
 await app.RunAsync();

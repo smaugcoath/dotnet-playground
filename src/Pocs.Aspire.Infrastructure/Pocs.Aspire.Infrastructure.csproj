@@ -15,7 +15,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Pocs.Aspire.Business\Pocs.Aspire.Business.csproj" />
 		<ProjectReference Include="..\Pocs.Aspire.Domain\Pocs.Aspire.Domain.csproj" />
 	</ItemGroup>
 </Project>
