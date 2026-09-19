@@ -30,13 +30,16 @@ internal static class UsersEndpoints
             .Build();
 
         var group = builder.MapGroup("api/v{version:apiVersion}/users")
-            .WithApiVersionSet(apiVersionSet);
+            .WithApiVersionSet(apiVersionSet)
+            .WithTags("Users");
 
         group.MapPost("", Create)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .WithSummary("Creates a user.");
         group.MapPut("{id:guid}", Update)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .WithSummary("Updates a user.");
         group.MapGet("{id:guid}", GetById)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName(nameof(GetById))

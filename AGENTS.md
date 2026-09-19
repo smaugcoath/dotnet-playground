@@ -69,7 +69,7 @@ matching HTTP response — `ValidationError` via `ToValidationProblem`, every ot
 | Validation | FluentValidation |
 | Error handling | LanguageExt (`Either<Failure, T>`, `Option<T>`) — no exceptions for expected failures |
 | Observability | OpenTelemetry (traces, metrics, logs) via `ServiceDefaults` |
-| API docs | Swashbuckle (Swagger/OpenAPI) |
+| API docs | `Microsoft.AspNetCore.OpenApi` (native document generation) + `Scalar.AspNetCore` (reference UI), one document per API version via `Asp.Versioning.OpenApi` |
 | Test isolation | Testcontainers (Postgres, integration tests) |
 | Assertions | **Shouldly** (`ShouldBe`, `ShouldBeEquivalentTo`) — free; do not introduce FluentAssertions v8+ (commercial) |
 | Mocking | NSubstitute (unit tests only) |

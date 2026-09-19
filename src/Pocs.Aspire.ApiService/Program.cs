@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Pocs.Aspire.ApiService.Endpoints;
 using Pocs.Aspire.Business;
 using Pocs.Aspire.Infrastructure;
+using Scalar.AspNetCore;
 using System.Collections.Generic;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,16 +25,19 @@ builder.Services.AddProblemDetails(options =>
     };
 
 });
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
     options.AssumeDefaultVersionWhenUnspecified = true;
     options.ReportApiVersions = true;
     options.ApiVersionReader = new UrlSegmentApiVersionReader();
-});
+})
+    .AddApiExplorer(options =>
+    {
+        options.GroupNameFormat = "'v'VVV";
+        options.SubstituteApiVersionInUrl = true;
+    })
+    .AddOpenApi();
 
 builder.AddRedisOutputCache("cache");
 
@@ -47,8 +51,8 @@ app.UseExceptionHandler();
 app.UseOutputCache();
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi().WithDocumentPerVersion();
+    app.MapScalarApiReference();
 }
 app.MapDefaultEndpoints();
 app.MapUsersEndpoints();

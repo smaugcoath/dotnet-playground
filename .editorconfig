@@ -203,9 +203,3 @@ dotnet_diagnostic.CA1707.severity = none
 # xUnit test classes and fixtures are public by convention; CA1515 only applies to application code.
 [tests/**.cs]
 dotnet_diagnostic.CA1515.severity = none
-
-# AV0021 (Asp.Versioning 10) wants AddApiVersioning().AddApiExplorer(), which lives in the separate
-# Asp.Versioning.Mvc.ApiExplorer package and only pays off with a Swagger document per API version.
-# This POC serves one v1 document, so the rule asks for a feature it does not have.
-[src/Pocs.Aspire.ApiService/**.cs]
-dotnet_diagnostic.AV0021.severity = none

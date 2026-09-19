@@ -36,5 +36,5 @@ dotnet run --project src/Pocs.Aspire.AppHost
 ```
 
 The Aspire dashboard URL (with its login token) is printed to the console. The
-dashboard shows every resource's status and links to the ApiService's Swagger
-UI.
+dashboard shows every resource's status and links to the ApiService's Scalar
+API reference.

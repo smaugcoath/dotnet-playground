@@ -50,7 +50,7 @@ dotnet run --project src/Pocs.Aspire.AppHost
 ```
 
 The Aspire dashboard URL (with its login token) is printed to the console; the
-API's Swagger UI is linked from the dashboard.
+API's Scalar reference (`/scalar`) is linked from the dashboard.
 
 ```shell
 dotnet test --solution Pocs.Aspire.sln
@@ -67,7 +67,7 @@ session hook for Claude Code cloud sessions.
 
 - `src/Pocs.Aspire.AppHost` — Aspire orchestration entry point; declares
   Postgres, Redis, and the API resources. [README](src/Pocs.Aspire.AppHost/README.md)
-- `src/Pocs.Aspire.ApiService` — Minimal API endpoints, versioning, Swagger,
+- `src/Pocs.Aspire.ApiService` — Minimal API endpoints, versioning, OpenAPI,
   output caching. [README](src/Pocs.Aspire.ApiService/README.md)
 - `src/Pocs.Aspire.Business` — one folder per use case (`Users/Create`,
   `Users/GetById`, `Users/Update`, `Users/Delete`, `Users/List`), each with its
@@ -144,6 +144,11 @@ of users ordered by email, or `400 ValidationProblem`.
 - **Shouldly over FluentAssertions.** FluentAssertions v8+ requires a
   commercial license; Shouldly does not. Trade-off: a smaller assertion API
   and less community content to lean on.
+- **Native OpenAPI + Scalar over Swashbuckle.** Swashbuckle left the
+  templates in .NET 9; the built-in `Microsoft.AspNetCore.OpenApi` generator
+  is maintained with the framework, and `Asp.Versioning.OpenApi` wires it to
+  produce one document per API version. Trade-off: fewer customisation
+  filters than Swashbuckle offered.
 
 ## How this repository is developed
 
@@ -169,8 +174,9 @@ Humans decide, review, and merge.
   `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3
 - LanguageExt.Core 4.4.9
 - FluentValidation 12.1.1
-- Asp.Versioning.Http 10.2.3
-- Swashbuckle.AspNetCore 10.2.3
+- Asp.Versioning.Http 10.2.3, Asp.Versioning.Mvc.ApiExplorer 10.2.1,
+  Asp.Versioning.OpenApi 10.2.3
+- Microsoft.AspNetCore.OpenApi 10.0.12, Scalar.AspNetCore 2.17.5
 - OpenTelemetry (core/exporter 1.19.0, ASP.NET Core / HTTP / runtime
   instrumentation 1.18.0)
 - xunit.v3 4.0.1, on Microsoft Testing Platform (`dotnet test` opts in via
