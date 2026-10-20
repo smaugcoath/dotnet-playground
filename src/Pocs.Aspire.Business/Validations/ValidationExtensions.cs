@@ -6,6 +6,8 @@ namespace Pocs.Aspire.Business.Validations;
 
 public static class ValidationExtensions
 {
+    private const int MaxPage = 1_000_000;
+
     public static IRuleBuilderOptions<T, Guid> ValidUserId<T>(this IRuleBuilder<T, Guid> ruleBuilder)
     {
         return ruleBuilder
@@ -34,7 +36,8 @@ public static class ValidationExtensions
     public static IRuleBuilderOptions<T, int> ValidPage<T>(this IRuleBuilder<T, int> ruleBuilder)
     {
         return ruleBuilder
-            .GreaterThanOrEqualTo(1).WithMessage("Page must be 1 or greater.");
+            .GreaterThanOrEqualTo(1).WithMessage("Page must be 1 or greater.")
+            .LessThanOrEqualTo(MaxPage).WithMessage($"Page must be {MaxPage} or less.");
     }
 
     public static IRuleBuilderOptions<T, int> ValidPageSize<T>(this IRuleBuilder<T, int> ruleBuilder)

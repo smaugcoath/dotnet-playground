@@ -133,4 +133,24 @@ public class UserListFunctionalTests
         problem.Errors.ShouldNotBeNull();
         problem.Errors["PageSize"].ShouldBe(["PageSize must be between 1 and 100."]);
     }
+
+    [Fact]
+    public async Task Get_ListUsers_ReturnsBadRequest_WhenPageIsTooLargeToOffset()
+    {
+        // Arrange
+        var client = _fixture.HttpClient;
+        var cancellationToken = TestContext.Current.CancellationToken;
+        string[] expectedFields = ["Page"];
+
+        // Act
+        var response = await client.GetAsync(new Uri(client.BaseAddress!, "/api/v1/users?page=2147483647&pageSize=100"), cancellationToken);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationErrorsPayload>(CaseInsensitiveJson, cancellationToken);
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        problem.ShouldNotBeNull();
+        problem.Errors.ShouldNotBeNull();
+        problem.Errors.Keys.ShouldBe(expectedFields);
+        problem.Errors["Page"].ShouldBe(["Page must be 1000000 or less."]);
+    }
 }
