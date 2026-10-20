@@ -7,8 +7,8 @@ paths:
 
 **Functional-first.** Prefer functional tests
 (`Pocs.Aspire.ApiService.Tests.Functional`, driven through `AspireHostFixture` — a
-real Aspire distributed app, real HTTP calls, real Postgres/Redis via
-Testcontainers) and integration tests
+real Aspire distributed app, real HTTP calls, real Postgres/Redis in
+containers started by the Aspire host) and integration tests
 (`Pocs.Aspire.Infrastructure.Tests.Integration`, real Postgres via Testcontainers)
 over mocked unit tests. Reserve `Pocs.Aspire.Business.Tests.Unit` (NSubstitute
 mocks) for paths a functional test structurally cannot reach — guard clauses like

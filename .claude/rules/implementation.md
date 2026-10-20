@@ -27,8 +27,10 @@ throw `ArgumentException`: they guard invariants that validation has already
 enforced at the boundary, so a throw there is a programmer error, not an expected
 failure. A unique-index violation (SqlState 23505) surfaces as `Either` instead,
 via `IUnitOfWork.SaveChangesAsync` returning `Task<Either<Failure, Unit>>` mapped
-to `UniqueConstraintViolationError`. Other `DbUpdateException`s are still unmapped
-and reach the exception handler as a 500.
+to `UniqueConstraintViolationError`. A `DbUpdateConcurrencyException` (the row was
+changed or removed by a concurrent request) maps to `ConcurrencyConflictError`, which
+Update and Delete turn into a 404. Other `DbUpdateException`s are still unmapped and
+reach the exception handler as a 500.
 
 **Versioned routing convention.** All user-facing routes live under
 `api/v{version:apiVersion}/...`, wired via `NewApiVersionSet()` /
