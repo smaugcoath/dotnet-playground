@@ -53,8 +53,9 @@ sequenceDiagram
 ```
 
 Business services always return `LanguageExt.Either<Failure, TResponse>` (never
-throw for expected failure paths). Endpoints pattern-match `result.Case` into the
-matching HTTP response — see `UsersEndpoints` in `ApiService/Endpoints`.
+throw for expected failure paths). Endpoints `Match` the `Either` into the
+matching HTTP response — `ValidationError` via `ToValidationProblem`, every other
+`Failure` via `ToProblem` — see `UsersEndpoints` in `ApiService/Endpoints`.
 
 ## Technologies
 

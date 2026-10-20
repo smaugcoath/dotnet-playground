@@ -1,218 +1,173 @@
-# Pocs.Aspire Solution
+# dotnet-playground
 
-## Table of Contents
-- [Overview](#overview)
-- [Project Purpose](#project-purpose)
-- [Project Structure](#project-structure)
-  - [Domain][domain-readme]
-  - [Business][business-readme]
-  - [Infrastructure][infrastructure-readme]
-  - [API Service][apiservice-readme]
-  - [AppHost][apphost-readme]
-- [Architecture](#architecture)
-- [Key Technologies](#key-technologies)
-- [Getting Started](#getting-started)
-- [Architectural Decisions](#architectural-decisions)
-- [Features](#features)
-- [Roadmap](#roadmap)
-- [Links of Interest](#links-of-interest)
-- [References](#references)
+[![Build](https://github.com/smaugcoath/dotnet-playground/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/smaugcoath/dotnet-playground/actions/workflows/build.yml)
 
-## Overview
+A proof-of-concept exploring .NET Aspire orchestration around a Clean
+Architecture minimal API, used as a sandbox for design decisions rather than a
+product.
 
-The Pocs.Aspire solution demonstrates a clean architecture implementation using .NET 8 and .NET Aspire for building distributed applications. It showcases modern development practices, clean architecture principles, and the capabilities of .NET Aspire for service orchestration.
+## What this demonstrates
 
-## Project Purpose
+- **Aspire orchestration with a startup dependency.** The AppHost declares
+  Postgres, Redis, and the API as resources, and gates the API on the
+  Postgres database and Redis being ready before it starts (`src/Pocs.Aspire.AppHost/Program.cs`).
+- **Clean Architecture with dependencies pointing inward.** `Domain` carries no
+  project reference to `Infrastructure` or `ApiService` and depends on no
+  EF Core or ASP.NET package (`src/Pocs.Aspire.Domain/Pocs.Aspire.Domain.csproj`).
+- **Expected failures as values, not exceptions.** Business services return
+  `LanguageExt.Either<Failure, TResponse>`; endpoints pattern-match the result
+  into the matching HTTP status (`src/Pocs.Aspire.Domain/Errors/Errors.cs`,
+  `src/Pocs.Aspire.ApiService/Endpoints/UsersEndpoints.cs`).
+- **Value objects with EF Core value conversions.** Identity, names, and email
+  are typed value objects, mapped to plain columns via `HasConversion`
+  (`src/Pocs.Aspire.Domain/Users/ValueObjects/`,
+  `src/Pocs.Aspire.Infrastructure/Persistence/Configurations/UserConfiguration.cs`).
+- **EF Core migrations applied at startup**, not `EnsureCreated`
+  (`context.Database.Migrate()` in
+  `src/Pocs.Aspire.Infrastructure/HostApplicationBuilderCollectionExtensions.cs`).
+- **URL-segment API versioning**, routes live under `api/v1/users`
+  (`src/Pocs.Aspire.ApiService/Endpoints/UsersEndpoints.cs`).
+- **Redis output caching on a read route**, keyed with `SetVaryByRouteValue("id")`
+  on the single-user GET (`src/Pocs.Aspire.ApiService/Endpoints/UsersEndpoints.cs`).
+- **Three test layers, weighted toward the real thing.** Functional tests run
+  the actual Aspire app via `Aspire.Hosting.Testing`; integration tests hit a
+  real Postgres via Testcontainers; unit tests (NSubstitute) are reserved for
+  guard clauses a running app can't reach — all asserting whole objects with
+  Shouldly (`tests/`, `.claude/rules/testing.md`).
 
-This is a personal proof-of-concept (POC) project that I'm using to experiment with .NET Aspire and modern architecture patterns. It serves as both a learning platform and a reference implementation for clean architecture principles in a distributed environment. Through this project, I aim to explore best practices, try new technologies, and develop my skills in modern .NET development.
+## Run it
 
-## Getting Started
-
-### Prerequisites
+Prerequisites:
 
 - .NET 8 SDK
-- Docker Desktop or Podman
+- Docker or Podman
 
-More information about prerequisites is available in the [.NET Aspire documentation][aspire-setup].
-
-### Running the Application
-
-1. Clone the repository
-1. Navigate to the solution directory
-1. Make sure the docker engine is running
-1. Run: 
 ```shell
 dotnet run --project src/Pocs.Aspire.AppHost
 ```
-1. Access the .NET Aspire dashboard at the provided URL.
-```ps
-PS C:\repos\pocs-aspire> dotnet run --project src\Pocs.Aspire.AppHost
-Building...
-info: Aspire.Hosting.DistributedApplication[0]
-      Aspire version: 9.1.0+2a8f48ea5811f317a26405eb315aa315cc9e3cea
-info: Aspire.Hosting.DistributedApplication[0]
-      Distributed application starting.
-info: Aspire.Hosting.DistributedApplication[0]
-      Application host directory is: C:\repos\pocs-aspire\src\Pocs.Aspire.AppHost
-info: Aspire.Hosting.DistributedApplication[0]
-      Now listening on: https://localhost:17131
-info: Aspire.Hosting.DistributedApplication[0]
-      Login to the dashboard at https://localhost:17131/login?t=d9664bcb59521f89eb22ef9db8ed2306
-info: Aspire.Hosting.DistributedApplication[0]
-      Distributed application started. Press Ctrl+C to shut down.
+
+The Aspire dashboard URL (with its login token) is printed to the console; the
+API's Swagger UI is linked from the dashboard.
+
+```shell
+dotnet test Pocs.Aspire.sln
 ```
 
-The dashboard will show the status of all the services included in the solution and the URLs to access them.
-For instance, click on the REST API service to access swagger to test it.
+Integration and functional tests need Docker running — they start real
+Postgres containers.
 
-## Project Structure
+Or open it in a dev container: `.devcontainer/` (VS Code / GitHub Codespaces)
+restores tools and packages on create. `.claude/` holds the agent rules and a
+session hook for Claude Code cloud sessions.
 
-This solution consists of multiple projects following clean architecture principles:
+## Solution layout
 
-- **Domain Project**: The core of the application containing business entities and rules
-- **Business Project**: Application services and business logic implementation
-- **Infrastructure Project**: Database access and external service integrations
-- **API Service Project**: RESTful endpoints exposing application functionality
-- **AppHost Project**: .NET Aspire orchestration for distributed services
-- **ServiceDefaults Project**: Standard .NET Aspire template for shared service configuration
+- `src/Pocs.Aspire.AppHost` — Aspire orchestration entry point; declares
+  Postgres, Redis, and the API resources. [README](src/Pocs.Aspire.AppHost/README.md)
+- `src/Pocs.Aspire.ApiService` — Minimal API endpoints, versioning, Swagger,
+  output caching. [README](src/Pocs.Aspire.ApiService/README.md)
+- `src/Pocs.Aspire.Business` — one folder per use case (`Users/Create`,
+  `Users/GetById`, `Users/Update`), each with its service, validator, and mapper.
+- `src/Pocs.Aspire.Domain` — entities, value objects, `Failure` types,
+  repository and unit-of-work abstractions.
+- `src/Pocs.Aspire.Infrastructure` — EF Core `AppDbContext`, migrations,
+  entity configurations, repository implementations.
+  [README](src/Pocs.Aspire.Infrastructure/README.md)
+- `src/Pocs.Aspire.ServiceDefaults` — shared OpenTelemetry, health check, and
+  resilience wiring, referenced by every service.
+- `tests/Pocs.Aspire.ApiService.Tests.Functional` — real Aspire app via
+  `AspireHostFixture`, real HTTP calls. [README](tests/Pocs.Aspire.ApiService.Tests.Functional/README.md)
+- `tests/Pocs.Aspire.Infrastructure.Tests.Integration` — real Postgres via
+  Testcontainers. [README](tests/Pocs.Aspire.Infrastructure.Tests.Integration/README.md)
+- `tests/Pocs.Aspire.Business.Tests.Unit` — NSubstitute mocks, guard clauses only.
 
-Each project (except ServiceDefaults) has its own detailed README explaining its purpose and architecture.
+## Request flow
 
-## Architecture
+A `POST /api/v1/users` hits `UsersEndpoints.Create`, which calls
+`ICreateService.CreateAsync`. The service runs the FluentValidation validator
+first; a failed validation short-circuits into a `ValidationError`. It then
+checks the repository for an existing user with the same email; a match
+returns `EmailAlreadyExistsError`. Otherwise it builds the `User` entity,
+persists it through `IUserRepository` and `IUnitOfWork.SaveChangesAsync`
+(EF Core against Postgres), and returns a `CreateResponse`. The endpoint
+pattern-matches that `Either<Failure, CreateResponse>` into `201 Created`
+(with a `Location` pointing at `GetById`), `400 ValidationProblem`, or
+`409 Conflict`.
 
-This solution follows clean architecture principles with clear separation of concerns:
+## Decisions
 
-- **Domain Layer**: Core business entities and logic, free from external dependencies
-- **Business Layer**: Application services implementing use cases and business rules
-- **Infrastructure Layer**: External concerns like data persistence and external services
-- **API Layer**: RESTful interfaces exposing functionality to clients
-- **AppHost**: Orchestration of services and resources using .NET Aspire
+- **Functional error handling over exceptions.** Expected failures
+  (`ValidationError`, `EmailAlreadyExistsError`, `NotFoundError`) are modeled
+  as `Either<Failure, T>` values and pattern-matched at the endpoint, so the
+  failure path is visible in the method signature. Trade-off: every endpoint
+  carries a `switch` over `result.Case` that has to cover every `Failure` type.
+- **Value objects over primitives.** `UserId`, `FirstName`, `LastName`, and
+  `Email` validate on construction instead of relying on scattered checks.
+  Trade-off: each one needs an explicit EF Core `HasConversion` to and from
+  its primitive column type.
+- **Migrations over `EnsureCreated`.** Schema changes are versioned and
+  applied with `context.Database.Migrate()` at startup. Trade-off: adding a
+  column means generating and committing a migration, not just editing the
+  entity.
+- **Output cache keyed by route value.** Only the single-user GET is cached,
+  for 5 seconds, varied by the `id` route value, so cached entries can't leak
+  across users. Trade-off: a short, fixed TTL rather than active invalidation
+  on write.
+- **URL-segment versioning.** `api/v{version}/users` makes the active version
+  explicit in the URL and in Swagger. Trade-off: bumping a version changes the
+  route itself, unlike a header- or query-string-based scheme.
+- **Functional-first testing.** Confidence comes mostly from the functional
+  suite (real Aspire host) and the integration suite (real Postgres); unit
+  tests are reserved for guard clauses the running app can't structurally
+  reach. Trade-off: most of the suite needs Docker and is slower than pure
+  unit tests.
+- **Central package management with analyzers as errors.** `Directory.Packages.props`
+  pins every NuGet version once; `Directory.Build.props` turns on
+  `AnalysisMode=All` with SonarAnalyzer and `TreatWarningsAsErrors`.
+  Trade-off: a new analyzer rule on an SDK bump can break the build until
+  addressed.
+- **Shouldly over FluentAssertions.** FluentAssertions v8+ requires a
+  commercial license; Shouldly does not. Trade-off: a smaller assertion API
+  and less community content to lean on.
 
-## Key Technologies
+## How this repository is developed
 
-- **.NET 8**: Latest .NET runtime with performance improvements
-- **.NET Aspire**: Cloud-ready stack for distributed applications
-- **Minimal APIs**: Lightweight HTTP endpoints with reduced boilerplate
-- **Entity Framework Core**: Object-relational mapping for data access
-- **PostgreSQL**: High-performance open-source database
-- **Redis**: In-memory data store for caching
-- **Docker**: Containerization for consistent deployment
-
-## Architectural Decisions
-
-- **Clean Architecture**: Separation of concerns with domain at the center
-- **Functional Results**: Using [LanguageExt][language-ext] for better error handling
-- **Persistence Ignorance**: Domain layer remains independent of persistence details
-- **.NET Aspire**: Modern approach to distributed application development
-
-## Features
-
-- **Resource Management**: Automatic provisioning of infrastructure resources
-- **Health Monitoring**: Built-in health checks and dashboard
-- **API Versioning**: Support for evolving APIs while maintaining compatibility
-- **Output Caching**: Redis-backed response caching for improved performance
-- **Structured Logging**: Comprehensive logging across all services
-- **Observability**: Built-in with OpenTelemetry support
+This repository is developed with AI-assisted workflows. The rules the agent
+follows live in `AGENTS.md` and `.claude/rules/`. Commits and pull requests
+that an AI tool authored or materially contributed to carry it as co-author.
+Humans decide, review, and merge.
 
 ## Roadmap
 
-The following items represent future development directions for this POC project:
+- Authentication and authorization — no identity provider or auth middleware
+  is wired in yet
+- Delete and List endpoints for users — only Create, Update, and GetById exist
+  today (`src/Pocs.Aspire.ApiService/Endpoints/UsersEndpoints.cs`)
+- A second service with inter-service messaging, to explore that side of Aspire
+- Upgrade to .NET 10 and Aspire 13 — currently `net8.0` and Aspire 9.1.0
+- Architecture tests, to enforce the dependency direction in CI rather than by convention
+- Mutation testing, to check how much the current test suite actually catches
 
-1. **Authentication and Authorization**
-   - [ ] Implement identity provider integration
-   - [ ] Add role-based access control
-   - [ ] Secure API endpoints
+## Stack
 
-1. **Advanced Testing**
-   - [ ] Expand unit test coverage
-   - [ ] Add integration tests using test containers
-   - [ ] Implement E2E testing
-   - [ ] Implement mutational testing
-   - [ ] Implement architectural testing
+- .NET 8 (`net8.0`)
+- .NET Aspire 9.1.0 (`Aspire.Hosting.AppHost`, `Aspire.Hosting.PostgreSQL`,
+  `Aspire.Hosting.Redis`, `Aspire.Npgsql.EntityFrameworkCore.PostgreSQL`,
+  `Aspire.StackExchange.Redis.OutputCaching`)
+- EF Core 9.0.3 (`Microsoft.EntityFrameworkCore`, `.Relational`, `.Design`),
+  `Npgsql.EntityFrameworkCore.PostgreSQL` 9.0.4
+- LanguageExt.Core 4.4.9
+- FluentValidation 11.11.0
+- Asp.Versioning.Http 8.1.0
+- Swashbuckle.AspNetCore 8.1.0
+- OpenTelemetry (core/exporter 1.15.3, ASP.NET Core / HTTP / runtime
+  instrumentation 1.11.1)
+- xunit.v3 2.0.0
+- Shouldly 4.3.0
+- NSubstitute 5.3.0
+- Testcontainers / Testcontainers.PostgreSql 4.3.0
+- SonarAnalyzer.CSharp 10.8.0.113526
 
-1. **CI/CD Pipeline**
-   - [ ] Set up GitHub Actions workflows
-   - [ ] Implement automated testing
-   - [ ] Configure container publishing
-   - [ ] Add static analysis tools
+## License
 
-1. **Event-Driven Architecture**
-   - [ ] Implement secondary service to enable inter service communication exploration
-   - [ ] Implement message queues or event bus
-   - [ ] Create event-based communication between services
-   - [ ] Add event sourcing for key domains
-
-1. **Performance Optimization**
-   - [ ] Implement comprehensive benchmarking
-   - [ ] Add advanced caching strategies
-
-1. **Advanced Deployment**
-   - [ ] Kubernetes deployment configuration
-   - [ ] Infrastructure as Code templates
-   - [ ] Multi-environment configuration
-1. **Developers Experience / QOL**
-   - [ ] Enable Hot Reload
-   - [ ] Autogeneration of clients for multiple technologies based on OpenAPI specification
-   - [ ] Integration with Application Performance Monitoring (e.g., Prometheus, Grafana)
-1. **Documentation**
-   - [ ] Autogenerate documentation wiki based on XML comments
-   - [ ] Better documentation for the OpenAPI 
- 
-1. **Upgrades**
-   - [ ] Upgrade to .Net 9
-
-
-## Links of Interest
-
-### Microsoft Technologies
-- [.NET Aspire Overview][aspire-overview]
-- [ASP.NET Core Documentation][aspnet-core]
-- [Entity Framework Core Documentation][ef-core]
-- [OpenTelemetry in .NET][opentelemetry-dotnet]
-
-### Third-Party Technologies
-- [PostgreSQL Documentation][postgresql]
-- [Redis Documentation][redis]
-- [Docker Documentation][docker]
-
-### NuGet Packages
-- [LanguageExt][language-ext] - Functional programming extensions
-- [Asp.Versioning.Mvc][api-versioning] - API versioning
-- [FluentValidation][fluent-validation] - Validation library
-- [Swashbuckle.AspNetCore][swashbuckle] - Swagger/OpenAPI documentation
-- [Testcontainers][testcontainers] - Defines test dependencies by as code
-- [Shouldly][shouldly] - Fluent API assertion framework
-
-### Architecture References
-- [Clean Architecture][clean-architecture]
-- [Microservices Architecture][microservices]
-
-
-[domain-readme]: ./src/Pocs.Aspire.Domain/README.md
-[business-readme]: ./src/Pocs.Aspire.Business/README.md
-[infrastructure-readme]: ./src/Pocs.Aspire.Infrastructure/README.md
-[apiservice-readme]: ./src/Pocs.Aspire.ApiService/README.md
-[apphost-readme]: ./src/Pocs.Aspire.AppHost/README.md
-
-[aspire-overview]: https://learn.microsoft.com/en-us/dotnet/aspire/get-started/aspire-overview
-[aspire-setup]: https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/setup-tooling?tabs=windows&pivots=visual-studio
-[aspnet-core]: https://learn.microsoft.com/en-us/aspnet/core/introduction-to-aspnet-core?view=aspnetcore-8.0
-[ef-core]: https://learn.microsoft.com/en-us/ef/core/
-[opentelemetry-dotnet]: https://learn.microsoft.com/en-us/dotnet/core/diagnostics/distributed-tracing
-
-[postgresql]: https://www.postgresql.org/docs/
-[redis]: https://redis.io/documentation
-[docker]: https://docs.docker.com/
-
-[language-ext]: https://github.com/louthy/language-ext
-[api-versioning]: https://github.com/dotnet/aspnet-api-versioning
-[fluent-validation]: https://docs.fluentvalidation.net/
-[swashbuckle]: https://github.com/domaindrivendev/Swashbuckle.AspNetCore
-[testcontainers]: https://dotnet.testcontainers.org/
-[shouldly]: https://docs.shouldly.org/
-
-[clean-architecture]: https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html
-[microservices]: https://microservices.io/
-
-
-
+MIT — see [LICENSE](LICENSE).

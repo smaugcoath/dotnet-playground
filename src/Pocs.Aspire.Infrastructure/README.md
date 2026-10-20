@@ -50,12 +50,14 @@ The Infrastructure layer uses:
 
 ## How to create and apply migrations
 
-Open the command line tool and navigate to root folder. Execute the commands from there.
+Open the command line tool and navigate to the repository root. The `dotnet-ef`
+tool is restored from the local tool manifest, not installed globally, so run
+`dotnet tool restore` once before the commands below.
 
-### Createa a new migration
-
+### Create a new migration
 
 ```shell
+dotnet tool restore
 dotnet ef migrations add <NameOfYourMigration> --project ./src/Pocs.Aspire.Infrastructure --startup-project ./src/Pocs.Aspire.AppHost --output-dir Persistence/Migrations
 ```
 
@@ -63,6 +65,7 @@ dotnet ef migrations add <NameOfYourMigration> --project ./src/Pocs.Aspire.Infra
 
 Note: To remove migrations EF requires a running database to check which migrations have been applied. While working locally this can be forced with the "--force" flag.
 ```shell
+dotnet tool restore
 dotnet ef migrations remove --project ./src/Pocs.Aspire.Infrastructure --startup-project ./src/Pocs.Aspire.AppHost --force
 ```
 

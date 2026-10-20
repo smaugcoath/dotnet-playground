@@ -1,9 +1,15 @@
-﻿using System.Threading;
+﻿using LanguageExt;
+using Pocs.Aspire.Domain.Errors;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Pocs.Aspire.Domain;
 
 public interface IUnitOfWork
 {
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Persists the tracked changes. Returns <see cref="UniqueConstraintViolationError"/>
+    /// when the database rejects a unique-index violation; other persistence errors throw.
+    /// </summary>
+    Task<Either<Failure, Unit>> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

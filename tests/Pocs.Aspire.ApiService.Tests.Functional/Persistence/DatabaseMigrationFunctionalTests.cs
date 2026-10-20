@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 
 namespace Pocs.Aspire.ApiService.Tests.Functional.Persistence;
 
-public class DatabaseMigrationFunctionalTests : IClassFixture<AspireHostFixture>
+[Collection(SharedAspireHost.Name)]
+public class DatabaseMigrationFunctionalTests
 {
     private readonly AspireHostFixture _fixture;
 

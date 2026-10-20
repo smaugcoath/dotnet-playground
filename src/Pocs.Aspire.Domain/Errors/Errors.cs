@@ -21,3 +21,8 @@ public record FieldError(string Field, string Message);
 public sealed record ValidationError(IEnumerable<FieldError> Errors) : Failure("ERR-002", $"{Errors.Count()} validation errors occurred.");
 
 public sealed record EmailAlreadyExistsError(Email Email) : Failure("ERR-003", $"The email {Email} already exists.");
+
+/// <summary>
+/// Represents a database unique constraint violation raised by a concurrent write.
+/// </summary>
+public sealed record UniqueConstraintViolationError(string ConstraintName) : Failure("ERR-004", $"A unique constraint '{ConstraintName}' was violated.");

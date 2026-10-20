@@ -1,6 +1,4 @@
-﻿namespace Pocs.Aspire.Business.Users.GetById;
-
-using FluentValidation;
+﻿using FluentValidation;
 using LanguageExt;
 using Pocs.Aspire.Business.Validations;
 using Pocs.Aspire.Domain;
@@ -9,16 +7,16 @@ using Pocs.Aspire.Domain.Users;
 using System.Threading;
 using System.Threading.Tasks;
 
+namespace Pocs.Aspire.Business.Users.GetById;
+
 internal class GetByIdService : IGetByIdService
 {
     private readonly IUserRepository _userRepository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IValidator<GetByIdRequest> _validator;
 
-    public GetByIdService(IUserRepository userRepository, IUnitOfWork unitOfWork, IValidator<GetByIdRequest> validator)
+    public GetByIdService(IUserRepository userRepository, IValidator<GetByIdRequest> validator)
     {
         _userRepository = userRepository;
-        _unitOfWork = unitOfWork;
         _validator = validator;
     }
 

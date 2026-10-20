@@ -20,13 +20,19 @@ public readonly record struct Email
 
     public static Email From(string value)
     {
-        if (!MailAddress.TryCreate(value, out _))
+        if (!IsValid(value))
         {
             throw new ArgumentException("The email address must be a valid email.", nameof(value));
         }
 
         return new Email(value);
     }
+
+    /// <summary>
+    /// Determines whether the given value is a structurally valid email address.
+    /// </summary>
+    public static bool IsValid(string value) => MailAddress.TryCreate(value, out _);
+
     /// <inheritdoc/>
     public override string ToString() => Value.ToString();
 

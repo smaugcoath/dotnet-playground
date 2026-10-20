@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Aspire.Hosting;
 
 namespace Pocs.Aspire.AppHost;
-public static class Program
+internal static class Program
 {
     public static async Task Main(string[] args)
     {
@@ -26,7 +26,8 @@ public static class Program
         builder.AddProject<Projects.Pocs_Aspire_ApiService>("apiservice")
             .WithReference(postgresDb)
             .WaitFor(postgresDb)
-            .WithReference(cache);
+            .WithReference(cache)
+            .WaitFor(cache);
 
 
         var app = builder.Build();
