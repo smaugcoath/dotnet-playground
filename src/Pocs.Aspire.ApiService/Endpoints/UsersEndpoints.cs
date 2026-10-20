@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using Asp.Versioning.Builder;
+using LanguageExt;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -22,6 +23,8 @@ namespace Pocs.Aspire.ApiService.Endpoints;
 
 internal static class UsersEndpoints
 {
+    private const string UserCacheTag = "users";
+
     public static IEndpointRouteBuilder MapUsersEndpoints(this IEndpointRouteBuilder builder)
     {
         var apiVersionSet = builder.NewApiVersionSet()
@@ -34,19 +37,27 @@ internal static class UsersEndpoints
             .WithTags("Users");
 
         group.MapPost("", Create)
+            .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status409Conflict)
             .WithSummary("Creates a user.");
         group.MapPut("{id:guid}", Update)
+            .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .WithSummary("Updates a user.");
         group.MapGet("{id:guid}", GetById)
+            .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName(nameof(GetById))
-            .CacheOutput(policy => policy.Expire(TimeSpan.FromSeconds(5)).SetVaryByRouteValue("id"));
+            .WithSummary("Retrieves a user by ID.")
+            .CacheOutput(policy => policy.Expire(TimeSpan.FromSeconds(5)).SetVaryByRouteValue("id").Tag(UserCacheTag));
         group.MapDelete("{id:guid}", Delete)
-            .ProducesProblem(StatusCodes.Status404NotFound);
-        group.MapGet("", List);
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .WithSummary("Deletes a user.");
+        group.MapGet("", List)
+            .ProducesValidationProblem()
+            .WithSummary("Lists users, paged.");
 
         return builder;
     }
@@ -72,12 +83,14 @@ internal static class UsersEndpoints
         [FromRoute] Guid id,
         [FromBody] UpdateRequest request,
         IUpdateService updateService,
+        IOutputCacheStore outputCacheStore,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
         request = request with { Id = id };
 
         var result = await updateService.UpdateAsync(request, cancellationToken);
+        await result.EvictCachedUsersOnSuccess(outputCacheStore, cancellationToken);
 
         return result.Match<Results<Ok<UpdateResponse>, ValidationProblem, ProblemHttpResult>>(
             Right: response => TypedResults.Ok(response),
@@ -115,11 +128,13 @@ internal static class UsersEndpoints
     public static async Task<Results<NoContent, ValidationProblem, ProblemHttpResult>> Delete(
         [FromRoute] Guid id,
         IDeleteService deleteService,
+        IOutputCacheStore outputCacheStore,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
         DeleteRequest request = new(id);
         var result = await deleteService.DeleteAsync(request, cancellationToken);
+        await result.EvictCachedUsersOnSuccess(outputCacheStore, cancellationToken);
 
         return result.Match<Results<NoContent, ValidationProblem, ProblemHttpResult>>(
             Right: _ => TypedResults.NoContent(),
@@ -133,6 +148,17 @@ internal static class UsersEndpoints
     /// <summary>
     /// Lists users, paged.
     /// </summary>
+    private static async Task EvictCachedUsersOnSuccess<TResponse>(
+        this Either<Failure, TResponse> result,
+        IOutputCacheStore outputCacheStore,
+        CancellationToken cancellationToken)
+    {
+        if (result.IsRight)
+        {
+            await outputCacheStore.EvictByTagAsync(UserCacheTag, cancellationToken);
+        }
+    }
+
     public static async Task<Results<Ok<ListResponse>, ValidationProblem, ProblemHttpResult>> List(
         IListService listService,
         HttpContext httpContext,

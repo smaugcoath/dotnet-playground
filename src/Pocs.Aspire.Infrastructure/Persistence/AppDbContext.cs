@@ -30,6 +30,10 @@ public class AppDbContext : DbContext, IUnitOfWork
 
             return Unit.Default;
         }
+        catch (DbUpdateConcurrencyException)
+        {
+            return new ConcurrencyConflictError();
+        }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } pgEx)
         {
             return new UniqueConstraintViolationError(pgEx.ConstraintName ?? string.Empty);

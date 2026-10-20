@@ -1,7 +1,9 @@
 using Pocs.Aspire.Business.Users.Create;
+using Pocs.Aspire.Business.Users.GetById;
 using Shouldly;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -26,7 +28,7 @@ public class UserDeleteFunctionalTests
 #pragma warning restore CA1812
 
     [Fact]
-    public async Task Delete_DeleteUser_ReturnsNoContentThenNotFoundOnGet_WhenUserExists()
+    public async Task Delete_DeleteUser_ReturnsNoContentThenNotFoundOnGet_WhenUserExistsAndWasCached()
     {
         // Arrange
         var client = _fixture.HttpClient;
@@ -35,14 +37,47 @@ public class UserDeleteFunctionalTests
         var createResponse = await client.PostAsJsonAsync("/api/v1/users", newUser, cancellationToken);
         var created = await createResponse.Content.ReadFromJsonAsync<CreateResponse>(cancellationToken);
         created.ShouldNotBeNull();
+        var userUri = new Uri(client.BaseAddress!, $"/api/v1/users/{created.Id}");
+        var expectedBeforeDelete = new GetByIdResponse(created.Id, "Marlyn", "Wescoff", "marlyn.wescoff.delete@example.com");
 
         // Act
-        var deleteResponse = await client.DeleteAsync(new Uri(client.BaseAddress!, $"/api/v1/users/{created.Id}"), cancellationToken);
-        var getResponse = await client.GetAsync(new Uri(client.BaseAddress!, $"/api/v1/users/{created.Id}"), cancellationToken);
+        var getBeforeResponse = await client.GetAsync(userUri, cancellationToken);
+        var actualBeforeDelete = await getBeforeResponse.Content.ReadFromJsonAsync<GetByIdResponse>(cancellationToken);
+        var deleteResponse = await client.DeleteAsync(userUri, cancellationToken);
+        var getAfterResponse = await client.GetAsync(userUri, cancellationToken);
 
         // Assert
+        getBeforeResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        actualBeforeDelete.ShouldBeEquivalentTo(expectedBeforeDelete);
         deleteResponse.StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        getResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        getAfterResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Delete_DeleteUser_ReturnsOnlyNoContentOrNotFound_WhenDeletesRaceForTheSameUser()
+    {
+        // Arrange
+        var client = _fixture.HttpClient;
+        var cancellationToken = TestContext.Current.CancellationToken;
+        const int attempts = 6;
+        var statuses = new List<HttpStatusCode>();
+
+        // Act
+        for (var round = 0; round < 10; round++)
+        {
+            var newUser = new CreateRequest("Mary", "Jackson", $"mary.jackson.race{round}@example.com");
+            var createResponse = await client.PostAsJsonAsync("/api/v1/users", newUser, cancellationToken);
+            var created = await createResponse.Content.ReadFromJsonAsync<CreateResponse>(cancellationToken);
+            created.ShouldNotBeNull();
+            var userUri = new Uri(client.BaseAddress!, $"/api/v1/users/{created.Id}");
+
+            var responses = await Task.WhenAll(Enumerable.Range(0, attempts).Select(_ => client.DeleteAsync(userUri, cancellationToken)));
+            statuses.AddRange(responses.Select(response => response.StatusCode));
+        }
+
+        // Assert
+        statuses.ShouldAllBe(status => status == HttpStatusCode.NoContent || status == HttpStatusCode.NotFound);
+        statuses.Count(status => status == HttpStatusCode.NoContent).ShouldBe(10);
     }
 
     [Fact]

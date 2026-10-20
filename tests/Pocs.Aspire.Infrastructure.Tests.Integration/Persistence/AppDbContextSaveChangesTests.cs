@@ -99,4 +99,36 @@ public class AppDbContextSaveChangesTests : IAsyncLifetime
         // Assert
         actual.ShouldBeEquivalentTo(expected);
     }
+
+    [Fact]
+    public async Task SaveChangesAsync_ReturnsConcurrencyConflictError_WhenTheDeletedUserWasAlreadyRemoved()
+    {
+        // Arrange
+        var user = User.From(
+            UserId.From(Guid.Parse("55555555-5555-5555-5555-555555555555")),
+            FirstName.From("Katherine"),
+            LastName.From("Johnson"),
+            Email.From("katherine.johnson.concurrency@example.com"));
+
+        await using (var seedContext = new AppDbContext(DbContextOptions))
+        {
+            seedContext.Add(user);
+            await seedContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        await using var firstContext = new AppDbContext(DbContextOptions);
+        await using var secondContext = new AppDbContext(DbContextOptions);
+        var firstCopy = await firstContext.Users.SingleAsync(TestContext.Current.CancellationToken);
+        var secondCopy = await secondContext.Users.SingleAsync(TestContext.Current.CancellationToken);
+        firstContext.Remove(firstCopy);
+        await ((IUnitOfWork)firstContext).SaveChangesAsync(TestContext.Current.CancellationToken);
+        secondContext.Remove(secondCopy);
+        var expected = Either<Failure, Unit>.Left(new ConcurrencyConflictError());
+
+        // Act
+        var actual = await ((IUnitOfWork)secondContext).SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        actual.ShouldBeEquivalentTo(expected);
+    }
 }

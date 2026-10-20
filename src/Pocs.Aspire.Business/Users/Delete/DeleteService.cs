@@ -44,7 +44,7 @@ internal class DeleteService : IDeleteService
                     await _userRepository.DeleteAsync(user, cancellationToken);
                     var saveResult = await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                    return saveResult.ToAsync();
+                    return saveResult.MapLeft(failure => failure.ToNotFoundWhenRemoved()).ToAsync();
                 }
             ).ToEither();
     }

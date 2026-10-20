@@ -4,6 +4,7 @@ using Pocs.Aspire.Business.Users.Update;
 using Shouldly;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -49,6 +50,60 @@ public class UserUpdateFunctionalTests
         actualUpdate.ShouldBeEquivalentTo(expectedUpdate);
         getResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         actualGet.ShouldBeEquivalentTo(expectedGet);
+    }
+
+    [Fact]
+    public async Task Put_UpdateUser_ReturnsUpdatedUserOnGet_WhenUserWasCached()
+    {
+        // Arrange
+        var client = _fixture.HttpClient;
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var newUser = new CreateRequest("Jean", "Bartik", "jean.bartik.cached@example.com");
+        var createResponse = await client.PostAsJsonAsync("/api/v1/users", newUser, cancellationToken);
+        var created = await createResponse.Content.ReadFromJsonAsync<CreateResponse>(cancellationToken);
+        created.ShouldNotBeNull();
+        var userUri = new Uri(client.BaseAddress!, $"/api/v1/users/{created.Id}");
+        var updateRequest = new UpdateRequest(created.Id, "Betty", "Holberton", "betty.holberton.cached@example.com");
+        var expectedGet = new GetByIdResponse(created.Id, "Betty", "Holberton", "betty.holberton.cached@example.com");
+
+        // Act
+        await client.GetAsync(userUri, cancellationToken);
+        var updateResponse = await client.PutAsJsonAsync(userUri, updateRequest, cancellationToken);
+        var getResponse = await client.GetAsync(userUri, cancellationToken);
+        var actualGet = await getResponse.Content.ReadFromJsonAsync<GetByIdResponse>(cancellationToken);
+
+        // Assert
+        updateResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        getResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        actualGet.ShouldBeEquivalentTo(expectedGet);
+    }
+
+    [Fact]
+    public async Task Put_UpdateUser_ReturnsOnlyOkOrNotFound_WhenUpdatesRaceWithADelete()
+    {
+        // Arrange
+        var client = _fixture.HttpClient;
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var updateStatuses = new List<HttpStatusCode>();
+
+        // Act
+        for (var round = 0; round < 10; round++)
+        {
+            var newUser = new CreateRequest("Frances", "Spence", $"frances.spence.race{round}@example.com");
+            var createResponse = await client.PostAsJsonAsync("/api/v1/users", newUser, cancellationToken);
+            var created = await createResponse.Content.ReadFromJsonAsync<CreateResponse>(cancellationToken);
+            created.ShouldNotBeNull();
+            var userUri = new Uri(client.BaseAddress!, $"/api/v1/users/{created.Id}");
+            var updateRequest = new UpdateRequest(created.Id, "Frances", "Bilas", $"frances.bilas.race{round}@example.com");
+
+            var updates = Enumerable.Range(0, 5).Select(_ => client.PutAsJsonAsync(userUri, updateRequest, cancellationToken));
+            var delete = client.DeleteAsync(userUri, cancellationToken);
+            var responses = await Task.WhenAll(updates.Append(delete));
+            updateStatuses.AddRange(responses.Take(5).Select(response => response.StatusCode));
+        }
+
+        // Assert
+        updateStatuses.ShouldAllBe(status => status == HttpStatusCode.OK || status == HttpStatusCode.NotFound);
     }
 
     [Fact]
