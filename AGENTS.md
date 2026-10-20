@@ -64,12 +64,12 @@ matching HTTP response — `ValidationError` via `ToValidationProblem`, every ot
 | Orchestration | .NET Aspire (`Aspire.Hosting.*`) |
 | HTTP API | ASP.NET Core Minimal APIs |
 | API versioning | `Asp.Versioning.Http`, URL-segment (`api/v{version}/...`) |
-| Persistence | EF Core 9 + Npgsql (Postgres), migrations applied at startup |
+| Persistence | EF Core 10 + Npgsql (Postgres), migrations applied at startup |
 | Caching | Redis via `Aspire.StackExchange.Redis.OutputCaching` |
 | Validation | FluentValidation |
 | Error handling | LanguageExt (`Either<Failure, T>`, `Option<T>`) — no exceptions for expected failures |
 | Observability | OpenTelemetry (traces, metrics, logs) via `ServiceDefaults` |
-| API docs | Swashbuckle (Swagger/OpenAPI) |
+| API docs | `Microsoft.AspNetCore.OpenApi` (native document generation) + `Scalar.AspNetCore` (reference UI), one document per API version via `Asp.Versioning.OpenApi` |
 | Test isolation | Testcontainers (Postgres, integration tests) |
 | Assertions | **Shouldly** (`ShouldBe`, `ShouldBeEquivalentTo`) — free; do not introduce FluentAssertions v8+ (commercial) |
 | Mocking | NSubstitute (unit tests only) |
@@ -80,7 +80,8 @@ matching HTTP response — `ValidationError` via `ToValidationProblem`, every ot
 - `src/Pocs.Aspire.Domain/` — entities, value objects, `Failure` types, repository
   and unit-of-work abstractions. Feature folders under `Users/`.
 - `src/Pocs.Aspire.Business/` — one folder per use case (`Users/Create`,
-  `Users/GetById`, `Users/Update`), each with its service, validator, and mapper.
+  `Users/GetById`, `Users/Update`, `Users/Delete`, `Users/List`), each with its
+  service, validator, and mapper.
 - `src/Pocs.Aspire.Infrastructure/` — EF Core `AppDbContext`, configurations,
   migrations, repository implementations.
 - `src/Pocs.Aspire.ApiService/` — Minimal API endpoints in `Endpoints/`; all
@@ -89,7 +90,8 @@ matching HTTP response — `ValidationError` via `ToValidationProblem`, every ot
 - `src/Pocs.Aspire.ServiceDefaults/` — shared telemetry, health, resilience wiring.
 - `tests/` — `*.Tests.Functional` (real Aspire app via `AspireHostFixture`),
   `*.Tests.Integration` (real Postgres via Testcontainers), `*.Tests.Unit`
-  (NSubstitute mocks, guard clauses only).
+  (NSubstitute mocks, guard clauses only), `*.Tests.Architecture` (ArchUnitNET rules
+  over the layer dependencies).
 
 Detailed coding and testing conventions load on demand from `.claude/rules/`.
 Code is the source of truth — read it rather than duplicating it here.

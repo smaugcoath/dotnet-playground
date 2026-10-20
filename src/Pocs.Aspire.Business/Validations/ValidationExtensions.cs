@@ -6,6 +6,8 @@ namespace Pocs.Aspire.Business.Validations;
 
 public static class ValidationExtensions
 {
+    private const int MaxPage = 1_000_000;
+
     public static IRuleBuilderOptions<T, Guid> ValidUserId<T>(this IRuleBuilder<T, Guid> ruleBuilder)
     {
         return ruleBuilder
@@ -29,5 +31,18 @@ public static class ValidationExtensions
         return ruleBuilder
             .Must(Email.IsValid).WithMessage("A valid email is required.")
             .MaximumLength(100).WithMessage("Emails cannot exceed 100 characters.");
+    }
+
+    public static IRuleBuilderOptions<T, int> ValidPage<T>(this IRuleBuilder<T, int> ruleBuilder)
+    {
+        return ruleBuilder
+            .GreaterThanOrEqualTo(1).WithMessage("Page must be 1 or greater.")
+            .LessThanOrEqualTo(MaxPage).WithMessage($"Page must be {MaxPage} or less.");
+    }
+
+    public static IRuleBuilderOptions<T, int> ValidPageSize<T>(this IRuleBuilder<T, int> ruleBuilder)
+    {
+        return ruleBuilder
+            .InclusiveBetween(1, 100).WithMessage("PageSize must be between 1 and 100.");
     }
 }

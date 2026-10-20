@@ -6,6 +6,11 @@ namespace Pocs.Aspire.Business.Users;
 
 internal static class SaveFailureExtensions
 {
+    internal static Failure ToNotFoundWhenRemoved(this Failure failure) =>
+        failure is ConcurrencyConflictError
+            ? new NotFoundError(nameof(User))
+            : failure;
+
     internal static Failure ToEmailFailure(this Failure failure, Email email) =>
         failure is UniqueConstraintViolationError { ConstraintName: User.EmailUniqueIndexName }
             ? new EmailAlreadyExistsError(email)

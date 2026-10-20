@@ -57,7 +57,7 @@ internal class UpdateService : IUpdateService
 
                     Either<Failure, UpdateResponse> mapped = saveResult.Match<Either<Failure, UpdateResponse>>(
                         Right: _ => user.ToResponse(),
-                        Left: failure => failure.ToEmailFailure(email));
+                        Left: failure => failure.ToNotFoundWhenRemoved().ToEmailFailure(email));
 
                     return mapped.ToAsync();
                 }

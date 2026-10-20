@@ -29,6 +29,9 @@ product.
   (`src/Pocs.Aspire.ApiService/Endpoints/UsersEndpoints.cs`).
 - **Redis output caching on a read route**, keyed with `SetVaryByRouteValue("id")`
   on the single-user GET (`src/Pocs.Aspire.ApiService/Endpoints/UsersEndpoints.cs`).
+- **Architecture tests enforce the dependency direction.** ArchUnitNET rules
+  fail the build if Domain or Business gain a dependency they must not have
+  (`tests/Pocs.Aspire.Tests.Architecture`).
 - **Three test layers, weighted toward the real thing.** Functional tests run
   the actual Aspire app via `Aspire.Hosting.Testing`; integration tests hit a
   real Postgres via Testcontainers; unit tests (NSubstitute) are reserved for
@@ -39,7 +42,7 @@ product.
 
 Prerequisites:
 
-- .NET 8 SDK
+- .NET 10 SDK
 - Docker or Podman
 
 ```shell
@@ -47,10 +50,10 @@ dotnet run --project src/Pocs.Aspire.AppHost
 ```
 
 The Aspire dashboard URL (with its login token) is printed to the console; the
-API's Swagger UI is linked from the dashboard.
+API's Scalar reference (`/scalar`) is linked from the dashboard.
 
 ```shell
-dotnet test Pocs.Aspire.sln
+dotnet test --solution Pocs.Aspire.sln
 ```
 
 Integration and functional tests need Docker running — they start real
@@ -64,10 +67,11 @@ session hook for Claude Code cloud sessions.
 
 - `src/Pocs.Aspire.AppHost` — Aspire orchestration entry point; declares
   Postgres, Redis, and the API resources. [README](src/Pocs.Aspire.AppHost/README.md)
-- `src/Pocs.Aspire.ApiService` — Minimal API endpoints, versioning, Swagger,
+- `src/Pocs.Aspire.ApiService` — Minimal API endpoints, versioning, OpenAPI,
   output caching. [README](src/Pocs.Aspire.ApiService/README.md)
 - `src/Pocs.Aspire.Business` — one folder per use case (`Users/Create`,
-  `Users/GetById`, `Users/Update`), each with its service, validator, and mapper.
+  `Users/GetById`, `Users/Update`, `Users/Delete`, `Users/List`), each with its
+  service, validator, and mapper.
 - `src/Pocs.Aspire.Domain` — entities, value objects, `Failure` types,
   repository and unit-of-work abstractions.
 - `src/Pocs.Aspire.Infrastructure` — EF Core `AppDbContext`, migrations,
@@ -80,6 +84,9 @@ session hook for Claude Code cloud sessions.
 - `tests/Pocs.Aspire.Infrastructure.Tests.Integration` — real Postgres via
   Testcontainers. [README](tests/Pocs.Aspire.Infrastructure.Tests.Integration/README.md)
 - `tests/Pocs.Aspire.Business.Tests.Unit` — NSubstitute mocks, guard clauses only.
+- `tests/Pocs.Aspire.Tests.Architecture` — ArchUnitNET rules over the compiled
+  assemblies: dependencies point inward, Domain and Business stay free of EF
+  Core and ASP.NET Core.
 
 ## Request flow
 
@@ -93,6 +100,14 @@ persists it through `IUserRepository` and `IUnitOfWork.SaveChangesAsync`
 pattern-matches that `Either<Failure, CreateResponse>` into `201 Created`
 (with a `Location` pointing at `GetById`), `400 ValidationProblem`, or
 `409 Conflict`.
+
+`DELETE /api/v1/users/{id}` and `GET /api/v1/users?page=&pageSize=` follow the
+same shape: `UsersEndpoints.Delete` calls `IDeleteService.DeleteAsync`, which
+validates the id, loads the user, removes it, and returns `204 NoContent`,
+`400 ValidationProblem`, or `404 Not Found`.
+`UsersEndpoints.List` calls `IListService.ListAsync`, which validates `page`
+(1-based) and `pageSize` (1-100, default 20), then returns a `ListResponse`
+of users ordered by email, or `400 ValidationProblem`.
 
 ## Decisions
 
@@ -129,6 +144,11 @@ pattern-matches that `Either<Failure, CreateResponse>` into `201 Created`
 - **Shouldly over FluentAssertions.** FluentAssertions v8+ requires a
   commercial license; Shouldly does not. Trade-off: a smaller assertion API
   and less community content to lean on.
+- **Native OpenAPI + Scalar over Swashbuckle.** Swashbuckle left the
+  templates in .NET 9; the built-in `Microsoft.AspNetCore.OpenApi` generator
+  is maintained with the framework, and `Asp.Versioning.OpenApi` wires it to
+  produce one document per API version. Trade-off: fewer customisation
+  filters than Swashbuckle offered.
 
 ## How this repository is developed
 
@@ -141,32 +161,32 @@ Humans decide, review, and merge.
 
 - Authentication and authorization — no identity provider or auth middleware
   is wired in yet
-- Delete and List endpoints for users — only Create, Update, and GetById exist
-  today (`src/Pocs.Aspire.ApiService/Endpoints/UsersEndpoints.cs`)
 - A second service with inter-service messaging, to explore that side of Aspire
-- Upgrade to .NET 10 and Aspire 13 — currently `net8.0` and Aspire 9.1.0
-- Architecture tests, to enforce the dependency direction in CI rather than by convention
 - Mutation testing, to check how much the current test suite actually catches
 
 ## Stack
 
-- .NET 8 (`net8.0`)
-- .NET Aspire 9.1.0 (`Aspire.Hosting.AppHost`, `Aspire.Hosting.PostgreSQL`,
+- .NET 10 (`net10.0`)
+- .NET Aspire 13.5.4 (`Aspire.AppHost.Sdk`, `Aspire.Hosting.PostgreSQL`,
   `Aspire.Hosting.Redis`, `Aspire.Npgsql.EntityFrameworkCore.PostgreSQL`,
   `Aspire.StackExchange.Redis.OutputCaching`)
-- EF Core 9.0.3 (`Microsoft.EntityFrameworkCore`, `.Relational`, `.Design`),
-  `Npgsql.EntityFrameworkCore.PostgreSQL` 9.0.4
+- EF Core 10.0.12 (`Microsoft.EntityFrameworkCore`, `.Relational`, `.Design`),
+  `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3
 - LanguageExt.Core 4.4.9
-- FluentValidation 11.11.0
-- Asp.Versioning.Http 8.1.0
-- Swashbuckle.AspNetCore 8.1.0
-- OpenTelemetry (core/exporter 1.15.3, ASP.NET Core / HTTP / runtime
-  instrumentation 1.11.1)
-- xunit.v3 2.0.0
+- FluentValidation 12.1.1
+- Asp.Versioning.Http 10.2.3, Asp.Versioning.Mvc.ApiExplorer 10.2.1,
+  Asp.Versioning.OpenApi 10.2.3
+- Microsoft.AspNetCore.OpenApi 10.0.12, Scalar.AspNetCore 2.17.5
+- OpenTelemetry (core/exporter 1.19.0, ASP.NET Core / HTTP / runtime
+  instrumentation 1.18.0)
+- xunit.v3 4.0.1, on Microsoft Testing Platform (`dotnet test` opts in via
+  `global.json`)
+- Microsoft.Testing.Extensions.CodeCoverage 18.11.2, ReportGenerator 5.5.11 (coverage
+  summary on every CI run)
 - Shouldly 4.3.0
-- NSubstitute 5.3.0
-- Testcontainers / Testcontainers.PostgreSql 4.3.0
-- SonarAnalyzer.CSharp 10.8.0.113526
+- NSubstitute 6.2.0
+- Testcontainers / Testcontainers.PostgreSql 4.15.0
+- SonarAnalyzer.CSharp 10.34.0.3385
 
 ## License
 

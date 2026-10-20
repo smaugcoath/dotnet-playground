@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Pocs.Aspire.Domain;
@@ -19,9 +18,9 @@ public static class HostApplicationBuilderCollectionExtensions
         return builder;
     }
 
-    public static void ApplyMigrations(this IApplicationBuilder applicationBuilder)
+    public static void ApplyMigrations(this IHost host)
     {
-        using var scope = applicationBuilder.ApplicationServices.CreateScope();
+        using var scope = host.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         context.Database.Migrate();
     }

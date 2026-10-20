@@ -26,3 +26,8 @@ public sealed record EmailAlreadyExistsError(Email Email) : Failure("ERR-003", $
 /// Represents a database unique constraint violation raised by a concurrent write.
 /// </summary>
 public sealed record UniqueConstraintViolationError(string ConstraintName) : Failure("ERR-004", $"A unique constraint '{ConstraintName}' was violated.");
+
+/// <summary>
+/// Represents a write that found its row already changed or removed by a concurrent request.
+/// </summary>
+public sealed record ConcurrencyConflictError() : Failure("ERR-005", "The record was changed or removed by a concurrent request.");
