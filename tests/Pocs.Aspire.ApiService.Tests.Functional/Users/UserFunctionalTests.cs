@@ -50,6 +50,7 @@ public class UserFunctionalTests
         var client = _fixture.HttpClient;
         var cancellationToken = TestContext.Current.CancellationToken;
         var newUser = new CreateRequest("Margaret", "Hamilton", "margaret.hamilton.conflict@example.com");
+        var expected = new ProblemPayload("The email margaret.hamilton.conflict@example.com already exists.", "ERR-003");
         var firstResponse = await client.PostAsJsonAsync("/api/v1/users", newUser, cancellationToken);
         firstResponse.EnsureSuccessStatusCode();
 
@@ -59,9 +60,7 @@ public class UserFunctionalTests
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
-        problem.ShouldNotBeNull();
-        problem.Title.ShouldBe("The email margaret.hamilton.conflict@example.com already exists.");
-        problem.Detail.ShouldBe("ERR-003");
+        problem.ShouldBeEquivalentTo(expected);
     }
 
     [Fact]
@@ -83,6 +82,40 @@ public class UserFunctionalTests
         problem.Errors["FirstName"].ShouldBe(["First name is required."]);
         problem.Errors["LastName"].ShouldBe(["Last name is required."]);
         problem.Errors["Email"].ShouldBe(["A valid email is required."]);
+    }
+
+    [Fact]
+    public async Task Post_CreateUser_ReturnsBadRequest_WhenEmailHasALeadingDot()
+    {
+        // Arrange
+        var client = _fixture.HttpClient;
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var invalidUser = new CreateRequest("Ada", "Lovelace", ".john@example.com");
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1/users", invalidUser, cancellationToken);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationErrorsPayload>(CaseInsensitiveJson, cancellationToken);
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        problem.ShouldNotBeNull();
+        problem.Errors.ShouldNotBeNull();
+        problem.Errors["Email"].ShouldBe(["A valid email is required."]);
+    }
+
+    [Fact]
+    public async Task Post_CreateUser_ReturnsCreated_WhenEmailIsStructurallyValid()
+    {
+        // Arrange
+        var client = _fixture.HttpClient;
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var newUser = new CreateRequest("Ada", "Lovelace", "ada.lovelace.validemail@example.com");
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1/users", newUser, cancellationToken);
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
     }
 
     [Fact]

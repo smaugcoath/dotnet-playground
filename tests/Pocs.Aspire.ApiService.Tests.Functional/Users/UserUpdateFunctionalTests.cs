@@ -86,6 +86,7 @@ public class UserUpdateFunctionalTests
         var cancellationToken = TestContext.Current.CancellationToken;
         var missingId = Guid.Parse("00000000-0000-0000-0000-0000000000dd");
         var updateRequest = new UpdateRequest(missingId, "Missing", "User", "missing.user.update@example.com");
+        var expected = new ProblemPayload("Entity 'User' was not found.", "ERR-001");
 
         // Act
         var response = await client.PutAsJsonAsync(new Uri(client.BaseAddress!, $"/api/v1/users/{missingId}"), updateRequest, cancellationToken);
@@ -93,9 +94,7 @@ public class UserUpdateFunctionalTests
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        problem.ShouldNotBeNull();
-        problem.Title.ShouldBe("Entity 'User' was not found.");
-        problem.Detail.ShouldBe("ERR-001");
+        problem.ShouldBeEquivalentTo(expected);
     }
 
     [Fact]
@@ -116,6 +115,7 @@ public class UserUpdateFunctionalTests
         createdB.ShouldNotBeNull();
 
         var updateRequest = new UpdateRequest(createdB.Id, "Herman", "Hollerith", "grace.murray.updateconflict@example.com");
+        var expected = new ProblemPayload("The email grace.murray.updateconflict@example.com already exists.", "ERR-003");
 
         // Act
         var response = await client.PutAsJsonAsync(new Uri(client.BaseAddress!, $"/api/v1/users/{createdB.Id}"), updateRequest, cancellationToken);
@@ -123,9 +123,7 @@ public class UserUpdateFunctionalTests
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
-        problem.ShouldNotBeNull();
-        problem.Title.ShouldBe("The email grace.murray.updateconflict@example.com already exists.");
-        problem.Detail.ShouldBe("ERR-003");
+        problem.ShouldBeEquivalentTo(expected);
     }
 
     [Fact]
