@@ -145,9 +145,6 @@ internal static class UsersEndpoints
             });
     }
 
-    /// <summary>
-    /// Lists users, paged.
-    /// </summary>
     private static async Task EvictCachedUsersOnSuccess<TResponse>(
         this Either<Failure, TResponse> result,
         IOutputCacheStore outputCacheStore,
@@ -159,6 +156,9 @@ internal static class UsersEndpoints
         }
     }
 
+    /// <summary>
+    /// Lists users, paged.
+    /// </summary>
     public static async Task<Results<Ok<ListResponse>, ValidationProblem, ProblemHttpResult>> List(
         IListService listService,
         HttpContext httpContext,

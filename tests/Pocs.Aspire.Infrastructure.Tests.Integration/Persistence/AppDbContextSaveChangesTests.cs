@@ -34,7 +34,7 @@ public class AppDbContextSaveChangesTests : IAsyncLifetime
     {
         await _container.StartAsync(TestContext.Current.CancellationToken);
         using var context = new AppDbContext(DbContextOptions);
-        await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
+        await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
     }
 
     public async ValueTask DisposeAsync()
