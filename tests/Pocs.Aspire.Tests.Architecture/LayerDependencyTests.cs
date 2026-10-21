@@ -3,6 +3,10 @@ namespace Pocs.Aspire.Tests.Architecture;
 using ArchUnitNET.Fluent.Syntax.Elements.Types;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 
+// Dependencies between the project assemblies themselves (Domain -> Business, Business -> Infrastructure,
+// Infrastructure -> ApiService, ...) are already impossible by the csproj ProjectReference layout, so only
+// rules the compiler does not enforce live here. Each rule requires its subject types to match: a
+// mistyped assembly regex fails the test instead of passing on an empty set.
 public class LayerDependencyTests
 {
     private const string CoverageInstrumentationNamespace = "^Microsoft\\.CodeCoverage";
@@ -12,37 +16,12 @@ public class LayerDependencyTests
             .And().DoNotResideInNamespaceMatching(CoverageInstrumentationNamespace);
 
     [Fact]
-    public void Domain_DoesNotDependOnAnyOtherProject()
-    {
-        ProjectTypes("^Pocs\\.Aspire\\.Domain,")
-            .Should().NotDependOnAny(ProjectTypes("^Pocs\\.Aspire\\.Business,")
-                .Or().ResideInAssemblyMatching("^Pocs\\.Aspire\\.Infrastructure,")
-                .Or().ResideInAssemblyMatching("^Pocs\\.Aspire\\.ApiService,")
-                .Or().ResideInAssemblyMatching("^Pocs\\.Aspire\\.ServiceDefaults,")
-                .Or().ResideInAssemblyMatching("^Pocs\\.Aspire\\.AppHost,"))
-            .WithoutRequiringPositiveResults()
-            .Check(ArchitectureFixture.Architecture);
-    }
-
-    [Fact]
     public void Domain_DoesNotDependOnEfCoreOrAspNetCore()
     {
         ProjectTypes("^Pocs\\.Aspire\\.Domain,")
             .Should().NotDependOnAny(Types().That().ResideInNamespaceMatching("Microsoft\\.EntityFrameworkCore.*")
                 .Or().ResideInNamespaceMatching("Microsoft\\.AspNetCore.*")
                 .Or().ResideInNamespaceMatching("Npgsql.*"))
-            .WithoutRequiringPositiveResults()
-            .Check(ArchitectureFixture.Architecture);
-    }
-
-    [Fact]
-    public void Business_DoesNotDependOnInfrastructureOrApiService()
-    {
-        ProjectTypes("^Pocs\\.Aspire\\.Business,")
-            .Should().NotDependOnAny(ProjectTypes("^Pocs\\.Aspire\\.Infrastructure,")
-                .Or().ResideInAssemblyMatching("^Pocs\\.Aspire\\.ApiService,")
-                .Or().ResideInAssemblyMatching("^Pocs\\.Aspire\\.AppHost,"))
-            .WithoutRequiringPositiveResults()
             .Check(ArchitectureFixture.Architecture);
     }
 
@@ -52,17 +31,6 @@ public class LayerDependencyTests
         ProjectTypes("^Pocs\\.Aspire\\.Business,")
             .Should().NotDependOnAny(Types().That().ResideInNamespaceMatching("Microsoft\\.EntityFrameworkCore.*")
                 .Or().ResideInNamespaceMatching("Npgsql.*"))
-            .WithoutRequiringPositiveResults()
-            .Check(ArchitectureFixture.Architecture);
-    }
-
-    [Fact]
-    public void Infrastructure_DoesNotDependOnApiServiceOrAppHost()
-    {
-        ProjectTypes("^Pocs\\.Aspire\\.Infrastructure,")
-            .Should().NotDependOnAny(ProjectTypes("^Pocs\\.Aspire\\.ApiService,")
-                .Or().ResideInAssemblyMatching("^Pocs\\.Aspire\\.AppHost,"))
-            .WithoutRequiringPositiveResults()
             .Check(ArchitectureFixture.Architecture);
     }
 
@@ -71,20 +39,6 @@ public class LayerDependencyTests
     {
         ProjectTypes("^Pocs\\.Aspire\\.Infrastructure,")
             .Should().NotDependOnAny(ProjectTypes("^Pocs\\.Aspire\\.Business,"))
-            .WithoutRequiringPositiveResults()
-            .Check(ArchitectureFixture.Architecture);
-    }
-
-    [Fact]
-    public void ServiceDefaults_DoesNotDependOnAnyOtherProject()
-    {
-        ProjectTypes("^Pocs\\.Aspire\\.ServiceDefaults,")
-            .Should().NotDependOnAny(ProjectTypes("^Pocs\\.Aspire\\.Domain,")
-                .Or().ResideInAssemblyMatching("^Pocs\\.Aspire\\.Business,")
-                .Or().ResideInAssemblyMatching("^Pocs\\.Aspire\\.Infrastructure,")
-                .Or().ResideInAssemblyMatching("^Pocs\\.Aspire\\.ApiService,")
-                .Or().ResideInAssemblyMatching("^Pocs\\.Aspire\\.AppHost,"))
-            .WithoutRequiringPositiveResults()
             .Check(ArchitectureFixture.Architecture);
     }
 }

@@ -47,7 +47,7 @@ public class UserRepositoryTests : IAsyncLifetime
     {
         // Arrange
         var expected = User.From(
-            UserId.New(),
+            UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000001")),
             FirstName.From("Ada"),
             LastName.From("Lovelace"),
             Email.From("ada.lovelace.getbyid@example.com"));
@@ -82,7 +82,7 @@ public class UserRepositoryTests : IAsyncLifetime
         await cts.CancelAsync();
 
         // Act
-        var act = () => repository.GetByIdAsync(UserId.New(), cts.Token);
+        var act = () => repository.GetByIdAsync(UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000002")), cts.Token);
 
         // Assert
         await Should.ThrowAsync<OperationCanceledException>(act);
@@ -94,7 +94,7 @@ public class UserRepositoryTests : IAsyncLifetime
         // Arrange
         await using var context = new AppDbContext(DbContextOptions);
         var repository = new UserRepository(context);
-        var missingId = UserId.New();
+        var missingId = UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000003"));
         var expected = Option<User>.None;
 
         // Act
@@ -109,7 +109,7 @@ public class UserRepositoryTests : IAsyncLifetime
     {
         // Arrange
         var expected = User.From(
-            UserId.New(),
+            UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000004")),
             FirstName.From("Katherine"),
             LastName.From("Johnson"),
             Email.From("katherine.johnson.create@example.com"));
@@ -139,7 +139,7 @@ public class UserRepositoryTests : IAsyncLifetime
     {
         // Arrange
         var seeded = User.From(
-            UserId.New(),
+            UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000005")),
             FirstName.From("Hedy"),
             LastName.From("Lamarr"),
             Email.From("hedy.lamarr.update@example.com"));
@@ -187,12 +187,12 @@ public class UserRepositoryTests : IAsyncLifetime
     {
         // Arrange
         var userA = User.From(
-            UserId.New(),
+            UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000006")),
             FirstName.From("Annie"),
             LastName.From("Easley"),
             Email.From("annie.easley.emailexists@example.com"));
         var userB = User.From(
-            UserId.New(),
+            UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000007")),
             FirstName.From("Mary"),
             LastName.From("Jackson"),
             Email.From("mary.jackson.emailexists@example.com"));
@@ -218,7 +218,7 @@ public class UserRepositoryTests : IAsyncLifetime
     {
         // Arrange
         var user = User.From(
-            UserId.New(),
+            UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000008")),
             FirstName.From("Dorothy"),
             LastName.From("Vaughan"),
             Email.From("dorothy.vaughan.emailexists@example.com"));
@@ -244,7 +244,7 @@ public class UserRepositoryTests : IAsyncLifetime
     {
         // Arrange
         var other = User.From(
-            UserId.New(),
+            UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000009")),
             FirstName.From("Melba"),
             LastName.From("Roy"),
             Email.From("melba.roy.emailexists@example.com"));
@@ -271,17 +271,17 @@ public class UserRepositoryTests : IAsyncLifetime
     {
         // Arrange
         var userA = User.From(
-            UserId.New(),
+            UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000010")),
             FirstName.From("Marissa"),
             LastName.From("Mayer"),
             Email.From("a.marissa.mayer.listordered@example.com"));
         var userB = User.From(
-            UserId.New(),
+            UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000011")),
             FirstName.From("Sheryl"),
             LastName.From("Sandberg"),
             Email.From("b.sheryl.sandberg.listordered@example.com"));
         var userC = User.From(
-            UserId.New(),
+            UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000012")),
             FirstName.From("Susan"),
             LastName.From("Wojcicki"),
             Email.From("c.susan.wojcicki.listordered@example.com"));
@@ -309,12 +309,12 @@ public class UserRepositoryTests : IAsyncLifetime
     {
         // Arrange
         var userA = User.From(
-            UserId.New(),
+            UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000013")),
             FirstName.From("Radia"),
             LastName.From("Perlman"),
             Email.From("radia.perlman.count@example.com"));
         var userB = User.From(
-            UserId.New(),
+            UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000014")),
             FirstName.From("Frances"),
             LastName.From("Allen"),
             Email.From("frances.allen.count@example.com"));
@@ -340,7 +340,7 @@ public class UserRepositoryTests : IAsyncLifetime
     {
         // Arrange
         var seeded = User.From(
-            UserId.New(),
+            UserId.From(Guid.Parse("a0000000-0000-0000-0000-000000000015")),
             FirstName.From("Lynn"),
             LastName.From("Conway"),
             Email.From("lynn.conway.delete@example.com"));
