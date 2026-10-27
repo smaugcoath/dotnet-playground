@@ -14,7 +14,7 @@
     <PackageVersion Include="Scalar.AspNetCore" Version="2.17.5" />
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.34.0.3385" />
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.6.2" />
-    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.6.2" />
+    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.6.4" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageVersion Include="LanguageExt.Core" Version="4.4.9" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.12" />
