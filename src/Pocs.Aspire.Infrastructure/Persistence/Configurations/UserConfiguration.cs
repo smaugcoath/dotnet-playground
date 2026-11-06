@@ -7,6 +7,8 @@ namespace Pocs.Aspire.Infrastructure.Persistence.Configurations;
 
 internal class UserConfiguration : IEntityTypeConfiguration<User>
 {
+    internal const string EmailUniqueIndexName = "IX_User_Email";
+
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.ToTable("Users");
@@ -21,23 +23,23 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(e => e.FirstName)
             .HasColumnName("FirstName")
             .IsRequired()
-            .HasMaxLength(50)
+            .HasMaxLength(FirstName.MaxLength)
             .HasConversion(domain => domain.Value, entity => FirstName.From(entity));
 
         builder.Property(e => e.LastName)
             .HasColumnName("LastName")
             .IsRequired()
-            .HasMaxLength(50)
+            .HasMaxLength(LastName.MaxLength)
             .HasConversion(domain => domain.Value, entity => LastName.From(entity));
 
         builder.Property(e => e.Email)
             .HasColumnName("Email")
             .IsRequired()
-            .HasMaxLength(100)
+            .HasMaxLength(Email.MaxLength)
             .HasConversion(domain => domain.Value, entity => Email.From(entity));
 
         builder.HasIndex(e => e.Email)
             .IsUnique()
-            .HasDatabaseName(User.EmailUniqueIndexName);
+            .HasDatabaseName(EmailUniqueIndexName);
     }
 }

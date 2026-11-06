@@ -1,6 +1,5 @@
 ﻿using FluentValidation;
 using LanguageExt;
-using Pocs.Aspire.Business.Users;
 using Pocs.Aspire.Business.Validations;
 using Pocs.Aspire.Domain;
 using Pocs.Aspire.Domain.Errors;
@@ -44,8 +43,6 @@ internal class CreateService : ICreateService
         await _userRepository.CreateAsync(user, cancellationToken);
         var saveResult = await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return saveResult.Match<Either<Failure, CreateResponse>>(
-            Right: _ => user.ToResponse(),
-            Left: failure => failure.ToEmailFailure(email));
+        return saveResult.Map(_ => user.ToResponse());
     }
 }
