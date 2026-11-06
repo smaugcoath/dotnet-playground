@@ -23,14 +23,14 @@ internal class CreateService : ICreateService
         _validator = validator;
     }
 
-    public async Task<Either<Failure, CreateResponse>> CreateAsync(CreateRequest request, CancellationToken cancellationToken = default)
-    {
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return new ValidationError(validationResult.ToFieldErrors());
-        }
+    public Task<Either<Failure, CreateResponse>> CreateAsync(CreateRequest request, CancellationToken cancellationToken = default) =>
+        _validator.ValidateToEither(request, cancellationToken)
+            .ToAsync()
+            .Bind(valid => CreateValidatedAsync(valid, cancellationToken).ToAsync())
+            .ToEither();
 
+    private async Task<Either<Failure, CreateResponse>> CreateValidatedAsync(CreateRequest request, CancellationToken cancellationToken)
+    {
         var email = Email.From(request.Email);
         var isEmailExists = await _userRepository.EmailExistsExceptForUser(email, null, cancellationToken);
         if (isEmailExists)

@@ -23,14 +23,14 @@ internal class UpdateService : IUpdateService
         _validator = validator;
     }
 
-    public async Task<Either<Failure, UpdateResponse>> UpdateAsync(UpdateRequest request, CancellationToken cancellationToken = default)
-    {
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return new ValidationError(validationResult.ToFieldErrors());
-        }
+    public Task<Either<Failure, UpdateResponse>> UpdateAsync(UpdateRequest request, CancellationToken cancellationToken = default) =>
+        _validator.ValidateToEither(request, cancellationToken)
+            .ToAsync()
+            .Bind(valid => UpdateValidatedAsync(valid, cancellationToken).ToAsync())
+            .ToEither();
 
+    private async Task<Either<Failure, UpdateResponse>> UpdateValidatedAsync(UpdateRequest request, CancellationToken cancellationToken)
+    {
         var email = Email.From(request.Email);
         var userId = UserId.From(request.Id);
         var isEmailExists = await _userRepository.EmailExistsExceptForUser(email, userId, cancellationToken);
