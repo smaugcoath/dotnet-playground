@@ -19,14 +19,14 @@ internal class ListService : IListService
         _validator = validator;
     }
 
-    public async Task<Either<Failure, ListResponse>> ListAsync(ListRequest request, CancellationToken cancellationToken = default)
-    {
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return new ValidationError(validationResult.ToFieldErrors());
-        }
+    public Task<Either<Failure, ListResponse>> ListAsync(ListRequest request, CancellationToken cancellationToken = default) =>
+        _validator.ValidateToEither(request, cancellationToken)
+            .ToAsync()
+            .Bind(valid => ListValidatedAsync(valid, cancellationToken).ToAsync())
+            .ToEither();
 
+    private async Task<Either<Failure, ListResponse>> ListValidatedAsync(ListRequest request, CancellationToken cancellationToken)
+    {
         var skip = (request.Page - 1) * request.PageSize;
 
         var users = await _userRepository.ListAsync(skip, request.PageSize, cancellationToken);

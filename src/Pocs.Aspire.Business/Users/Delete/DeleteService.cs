@@ -4,6 +4,7 @@ using Pocs.Aspire.Business.Validations;
 using Pocs.Aspire.Domain;
 using Pocs.Aspire.Domain.Errors;
 using Pocs.Aspire.Domain.Users;
+using Pocs.Aspire.Domain.Users.ValueObjects;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,15 +23,15 @@ internal class DeleteService : IDeleteService
         _validator = validator;
     }
 
-    public async Task<Either<Failure, Unit>> DeleteAsync(DeleteRequest request, CancellationToken cancellationToken = default)
-    {
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return new ValidationError(validationResult.ToFieldErrors());
-        }
+    public Task<Either<Failure, Unit>> DeleteAsync(DeleteRequest request, CancellationToken cancellationToken = default) =>
+        _validator.ValidateToEither(request, cancellationToken)
+            .ToAsync()
+            .Bind(valid => DeleteValidatedAsync(valid, cancellationToken).ToAsync())
+            .ToEither();
 
-        var userId = request.ToDomain();
+    private async Task<Either<Failure, Unit>> DeleteValidatedAsync(DeleteRequest request, CancellationToken cancellationToken)
+    {
+        var userId = UserId.From(request.Id);
 
         var userOption = await _userRepository.GetByIdAsync(userId, cancellationToken);
 
