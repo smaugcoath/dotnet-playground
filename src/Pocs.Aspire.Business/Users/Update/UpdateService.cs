@@ -40,9 +40,7 @@ internal class UpdateService : IUpdateService
             return new EmailAlreadyExistsError(email);
         }
 
-        var updatedUser = request.ToDomain();
-
-        var userOption = await _userRepository.GetByIdAsync(updatedUser.Id, cancellationToken);
+        var userOption = await _userRepository.GetByIdAsync(userId, cancellationToken);
 
         return await userOption
             .ToEither<Failure>(new NotFoundError(nameof(User)))
@@ -51,7 +49,7 @@ internal class UpdateService : IUpdateService
             (
                 async user =>
                 {
-                    (user.FirstName, user.LastName, user.Email) = (updatedUser.FirstName, updatedUser.LastName, updatedUser.Email);
+                    user.ChangeDetails(FirstName.From(request.FirstName), LastName.From(request.LastName), email);
                     await _userRepository.UpdateAsync(user, cancellationToken);
                     var saveResult = await _unitOfWork.SaveChangesAsync(cancellationToken);
 

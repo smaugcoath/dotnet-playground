@@ -163,7 +163,7 @@ public class UserRepositoryTests : IAsyncLifetime
                 Some: user => user,
                 None: () => throw new InvalidOperationException("Expected the seeded user to be found, but the repository returned None."));
 
-            (loaded.FirstName, loaded.LastName, loaded.Email) = (FirstName.From("Hedwig"), LastName.From("Kiesler"), Email.From("hedwig.kiesler.update@example.com"));
+            loaded.ChangeDetails(FirstName.From("Hedwig"), LastName.From("Kiesler"), Email.From("hedwig.kiesler.update@example.com"));
 
             await repository.UpdateAsync(loaded, TestContext.Current.CancellationToken);
             await updateContext.SaveChangesAsync(TestContext.Current.CancellationToken);

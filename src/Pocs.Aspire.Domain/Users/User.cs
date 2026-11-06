@@ -23,17 +23,17 @@ public class User
     /// <summary>
     /// Gets the user's first name.
     /// </summary>
-    public FirstName FirstName { get; set; }
+    public FirstName FirstName { get; private set; }
 
     /// <summary>
     /// Gets the user's last name.
     /// </summary>
-    public LastName LastName { get; set; }
+    public LastName LastName { get; private set; }
 
     /// <summary>
     /// Gets the user's email address.
     /// </summary>
-    public Email Email { get; set; }
+    public Email Email { get; private set; }
 
     private User(UserId id, FirstName firstName, LastName lastName, Email email) =>
             (Id, FirstName, LastName, Email) = (id, firstName, lastName, email);
@@ -42,5 +42,11 @@ public class User
             new User(id, firstName, lastName, email);
     public static User New(FirstName firstName, LastName lastName, Email email) =>
         new User(UserId.New(), firstName, lastName, email);
+
+    /// <summary>
+    /// Changes the user's personal details.
+    /// </summary>
+    public void ChangeDetails(FirstName firstName, LastName lastName, Email email) =>
+        (FirstName, LastName, Email) = (firstName, lastName, email);
 
 }
