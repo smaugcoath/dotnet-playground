@@ -1,4 +1,6 @@
-﻿using System;
+﻿using LanguageExt;
+using Pocs.Aspire.Domain.Errors;
+using System;
 
 namespace Pocs.Aspire.Domain.Users.ValueObjects;
 
@@ -6,10 +8,14 @@ namespace Pocs.Aspire.Domain.Users.ValueObjects;
 /// Represents a strongly-typed last name for a <see cref="User"/> entity.
 /// </summary>
 /// <remarks>
-/// This value object encapsulates a valid last name string and ensures it is neither null nor improperly formatted.
+/// A last name is never blank and never longer than <see cref="MaxLength"/> characters.
 /// </remarks>
 public readonly record struct LastName
 {
+    public const int MaxLength = 50;
+    public const string RequiredMessage = "Last name is required.";
+    public static readonly string TooLongMessage = $"Last name cannot exceed {MaxLength} characters.";
+
     public string Value { get; init; }
 
     private LastName(string value)
@@ -17,15 +23,36 @@ public readonly record struct LastName
         Value = value;
     }
 
-    public static LastName From(string value)
+    /// <summary>
+    /// Creates a last name, or a <see cref="ValidationError"/> when the value breaks an invariant.
+    /// </summary>
+    public static Either<Failure, LastName> Create(string value) =>
+        Validate(value) is { } message
+            ? new ValidationError([new FieldError(nameof(LastName), message)])
+            : new LastName(value);
+
+    /// <summary>
+    /// Creates a last name from a value already known to be valid; throws when it is not.
+    /// </summary>
+    public static LastName From(string value) =>
+        Validate(value) is { } message
+            ? throw new ArgumentException(message, nameof(value))
+            : new LastName(value);
+
+    public static bool IsNotBlank(string? value) => !string.IsNullOrWhiteSpace(value);
+
+    public static bool IsWithinMaxLength(string? value) => value is null || value.Length <= MaxLength;
+
+    private static string? Validate(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (!IsNotBlank(value))
         {
-            throw new ArgumentException("The last name cannot be empty.", nameof(value));
+            return RequiredMessage;
         }
 
-        return new LastName(value);
+        return IsWithinMaxLength(value) ? null : TooLongMessage;
     }
+
     /// <inheritdoc/>
     public override string ToString() => Value.ToString();
 

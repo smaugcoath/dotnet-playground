@@ -16,21 +16,21 @@ public static class ValidationExtensions
     public static IRuleBuilderOptions<T, string> ValidFirstName<T>(this IRuleBuilder<T, string> ruleBuilder)
     {
         return ruleBuilder
-            .NotEmpty().WithMessage("First name is required.")
-            .MaximumLength(50).WithMessage("First name cannot exceed 50 characters.");
+            .Must(FirstName.IsNotBlank).WithMessage(FirstName.RequiredMessage)
+            .Must(FirstName.IsWithinMaxLength).WithMessage(FirstName.TooLongMessage);
     }
     public static IRuleBuilderOptions<T, string> ValidLastName<T>(this IRuleBuilder<T, string> ruleBuilder)
     {
         return ruleBuilder
-            .NotEmpty().WithMessage("Last name is required.")
-            .MaximumLength(50).WithMessage("Last name cannot exceed 50 characters.");
+            .Must(LastName.IsNotBlank).WithMessage(LastName.RequiredMessage)
+            .Must(LastName.IsWithinMaxLength).WithMessage(LastName.TooLongMessage);
     }
 
     public static IRuleBuilderOptions<T, string> ValidEmail<T>(this IRuleBuilder<T, string> ruleBuilder)
     {
         return ruleBuilder
-            .Must(Email.IsValid).WithMessage("A valid email is required.")
-            .MaximumLength(100).WithMessage("Emails cannot exceed 100 characters.");
+            .Must(Email.IsValid).WithMessage(Email.InvalidMessage)
+            .Must(Email.IsWithinMaxLength).WithMessage(Email.TooLongMessage);
     }
 
     public static IRuleBuilderOptions<T, int> ValidPage<T>(this IRuleBuilder<T, int> ruleBuilder)
