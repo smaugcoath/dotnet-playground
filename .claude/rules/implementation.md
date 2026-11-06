@@ -25,12 +25,13 @@ matching HTTP response: `ValidationError` via `ToValidationProblem`, every other
 Value-object factories (`Email.From`, `FirstName.From`, `UserId.From`, ...) still
 throw `ArgumentException`: they guard invariants that validation has already
 enforced at the boundary, so a throw there is a programmer error, not an expected
-failure. A unique-index violation (SqlState 23505) surfaces as `Either` instead,
-via `IUnitOfWork.SaveChangesAsync` returning `Task<Either<Failure, Unit>>` mapped
-to `UniqueConstraintViolationError`. A `DbUpdateConcurrencyException` (the row was
-changed or removed by a concurrent request) maps to `ConcurrencyConflictError`, which
-Update and Delete turn into a 404. Other `DbUpdateException`s are still unmapped and
-reach the exception handler as a 500.
+failure. `IUnitOfWork.SaveChangesAsync` (the persistence adapter, `AppDbContext`)
+returns `Task<Either<Failure, Unit>>` and translates storage rejections into domain
+failures itself: a violation of the user email unique index becomes
+`EmailAlreadyExistsError`, a `DbUpdateConcurrencyException` (row removed concurrently)
+becomes `NotFoundError`, any other unique violation a detail-free
+`UniqueConstraintViolationError`. Constraint names never leave Infrastructure. Other
+`DbUpdateException`s are unmapped and reach the exception handler as a 500.
 
 **Versioned routing convention.** All user-facing routes live under
 `api/v{version:apiVersion}/...`, wired via `NewApiVersionSet()` /

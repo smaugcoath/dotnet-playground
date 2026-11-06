@@ -1,4 +1,4 @@
-namespace Pocs.Aspire.Infrastructure.Tests.Integration.Persistence;
+﻿namespace Pocs.Aspire.Infrastructure.Tests.Integration.Persistence;
 
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
@@ -44,7 +44,7 @@ public class AppDbContextSaveChangesTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task SaveChangesAsync_ReturnsUniqueConstraintViolationError_WhenTwoUsersShareAnEmail()
+    public async Task SaveChangesAsync_ReturnsEmailAlreadyExistsError_WhenAnInsertedUserReusesAnEmail()
     {
         // Arrange
         var sharedEmail = Email.From("ada.lovelace.saveconflict@example.com");
@@ -69,7 +69,7 @@ public class AppDbContextSaveChangesTests : IAsyncLifetime
         await using var context = new AppDbContext(DbContextOptions);
         context.Add(conflictingUser);
         IUnitOfWork unitOfWork = context;
-        var expected = Either<Failure, Unit>.Left(new UniqueConstraintViolationError(User.EmailUniqueIndexName));
+        var expected = Either<Failure, Unit>.Left(new EmailAlreadyExistsError(sharedEmail));
 
         // Act
         var actual = await unitOfWork.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -101,7 +101,7 @@ public class AppDbContextSaveChangesTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task SaveChangesAsync_ReturnsConcurrencyConflictError_WhenTheDeletedUserWasAlreadyRemoved()
+    public async Task SaveChangesAsync_ReturnsNotFoundError_WhenTheDeletedUserWasAlreadyRemoved()
     {
         // Arrange
         var user = User.From(
@@ -123,10 +123,76 @@ public class AppDbContextSaveChangesTests : IAsyncLifetime
         firstContext.Remove(firstCopy);
         await ((IUnitOfWork)firstContext).SaveChangesAsync(TestContext.Current.CancellationToken);
         secondContext.Remove(secondCopy);
-        var expected = Either<Failure, Unit>.Left(new ConcurrencyConflictError());
+        var expected = Either<Failure, Unit>.Left(new NotFoundError(nameof(User)));
 
         // Act
         var actual = await ((IUnitOfWork)secondContext).SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        actual.ShouldBeEquivalentTo(expected);
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_ReturnsEmailAlreadyExistsError_WhenAnUpdatedUserTakesAnotherUsersEmail()
+    {
+        // Arrange
+        var takenEmail = Email.From("taken.update.race@example.com");
+        var owner = User.From(
+            UserId.From(Guid.Parse("66666666-6666-6666-6666-666666666666")),
+            FirstName.From("Ada"),
+            LastName.From("Lovelace"),
+            takenEmail);
+        var updater = User.From(
+            UserId.From(Guid.Parse("77777777-7777-7777-7777-777777777777")),
+            FirstName.From("Grace"),
+            LastName.From("Hopper"),
+            Email.From("grace.update.race@example.com"));
+
+        await using (var seedContext = new AppDbContext(DbContextOptions))
+        {
+            seedContext.AddRange(owner, updater);
+            await seedContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        await using var context = new AppDbContext(DbContextOptions);
+        var tracked = await context.Users.SingleAsync(u => u.Id == updater.Id, TestContext.Current.CancellationToken);
+        tracked.Email = takenEmail;
+        var expected = Either<Failure, Unit>.Left(new EmailAlreadyExistsError(takenEmail));
+
+        // Act
+        var actual = await ((IUnitOfWork)context).SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        actual.ShouldBeEquivalentTo(expected);
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_ReturnsNotFoundError_WhenTheUpdatedUserWasAlreadyRemoved()
+    {
+        // Arrange
+        var user = User.From(
+            UserId.From(Guid.Parse("88888888-8888-8888-8888-888888888888")),
+            FirstName.From("Mary"),
+            LastName.From("Jackson"),
+            Email.From("mary.jackson.concurrency@example.com"));
+
+        await using (var seedContext = new AppDbContext(DbContextOptions))
+        {
+            seedContext.Add(user);
+            await seedContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        await using var deleteContext = new AppDbContext(DbContextOptions);
+        await using var updateContext = new AppDbContext(DbContextOptions);
+        var toDelete = await deleteContext.Users.SingleAsync(TestContext.Current.CancellationToken);
+        var toUpdate = await updateContext.Users.SingleAsync(TestContext.Current.CancellationToken);
+        deleteContext.Remove(toDelete);
+        await ((IUnitOfWork)deleteContext).SaveChangesAsync(TestContext.Current.CancellationToken);
+        toUpdate.FirstName = FirstName.From("Maria");
+        var expected = Either<Failure, Unit>.Left(new NotFoundError(nameof(User)));
+
+        // Act
+        var actual = await ((IUnitOfWork)updateContext).SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         actual.ShouldBeEquivalentTo(expected);

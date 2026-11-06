@@ -36,7 +36,7 @@ public class ProblemDetailsFunctionalTests : IAsyncLifetime
         var builder = WebApplication.CreateSlimBuilder();
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         _app = builder.Build();
-        _app.MapGet("/unique-constraint", () => new UniqueConstraintViolationError("IX_User_Other").ToProblem());
+        _app.MapGet("/unique-constraint", () => new UniqueConstraintViolationError().ToProblem());
         _app.MapGet("/unmapped", () => new UnmappedFailure().ToProblem());
         await _app.StartAsync(TestContext.Current.CancellationToken);
         _client = new HttpClient { BaseAddress = new Uri(_app.Urls.First()) };
