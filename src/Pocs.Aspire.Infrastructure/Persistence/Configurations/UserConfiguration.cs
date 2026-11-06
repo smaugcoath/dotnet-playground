@@ -7,6 +7,8 @@ namespace Pocs.Aspire.Infrastructure.Persistence.Configurations;
 
 internal class UserConfiguration : IEntityTypeConfiguration<User>
 {
+    internal const string EmailUniqueIndexName = "IX_User_Email";
+
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.ToTable("Users");
@@ -38,6 +40,6 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasIndex(e => e.Email)
             .IsUnique()
-            .HasDatabaseName(User.EmailUniqueIndexName);
+            .HasDatabaseName(EmailUniqueIndexName);
     }
 }

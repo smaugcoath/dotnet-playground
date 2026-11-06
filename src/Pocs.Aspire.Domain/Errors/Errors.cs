@@ -23,11 +23,7 @@ public sealed record ValidationError(IEnumerable<FieldError> Errors) : Failure("
 public sealed record EmailAlreadyExistsError(Email Email) : Failure("ERR-003", $"The email {Email} already exists.");
 
 /// <summary>
-/// Represents a database unique constraint violation raised by a concurrent write.
+/// Represents a write rejected because it would duplicate a value that must be unique,
+/// when no more specific domain failure applies. Deliberately carries no storage detail.
 /// </summary>
-public sealed record UniqueConstraintViolationError(string ConstraintName) : Failure("ERR-004", $"A unique constraint '{ConstraintName}' was violated.");
-
-/// <summary>
-/// Represents a write that found its row already changed or removed by a concurrent request.
-/// </summary>
-public sealed record ConcurrencyConflictError() : Failure("ERR-005", "The record was changed or removed by a concurrent request.");
+public sealed record UniqueConstraintViolationError() : Failure("ERR-004", "A unique value was already taken.");
