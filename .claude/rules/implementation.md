@@ -16,14 +16,9 @@ paths:
   They earn their keep most on interfaces (`IUserRepository`, `ICreateService`,
   ...), less so on trivial constructors.
 
-**Functional error handling.** Business services return
-`LanguageExt.Either<Failure, TResponse>` (and `Option<T>` for absence) — never
-throw for expected failure paths. Endpoints `Match` the `Either` into the
-matching HTTP response: `ValidationError` via `ToValidationProblem`, every other
-`Failure` via `ToProblem`.
-
-Value-object factories (`Email.From`, `FirstName.From`, `UserId.From`, ...) still
-throw `ArgumentException`: they guard invariants that validation has already
+**Functional error handling.** The `Either<Failure, TResponse>` / `Match` contract
+is in `AGENTS.md`; `Option<T>` marks absence. Value-object factories
+(`Email.From`, `FirstName.From`, `UserId.From`, ...) still throw `ArgumentException`: they guard invariants that validation has already
 enforced at the boundary, so a throw there is a programmer error, not an expected
 failure. `IUnitOfWork.SaveChangesAsync` (the persistence adapter, `AppDbContext`)
 returns `Task<Either<Failure, Unit>>` and translates storage rejections into domain
